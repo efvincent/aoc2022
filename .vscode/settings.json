@@ -1,0 +1,17 @@
+{
+  "files.exclude": {
+    "**/*.hi": true,
+    "**/*.o": true,
+    "**/*.x": true,
+    "**/*.info": true,
+    "**/*.y": true,
+    "**/.stack-work": true,
+    "**/*.bak": true,
+    "**/.hlint.yaml": true,
+    "**/.stylish-haskell.yaml": true,
+    "**/brittany.yaml": true,
+    "**/hie.yaml": true,
+    "**/.ghci": true,
+    "**/.vscode": true
+  }
+}
