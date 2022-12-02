@@ -1,5 +1,6 @@
 {- DAY02 : https://adventofcode.com/2022/day/2 -}
-module Day02  where
+module Day02 (solve02)  where
+
 import Util (getFile)
 
 data Result = Win   | Lose | Draw     deriving Show
@@ -24,38 +25,24 @@ parseLine s = error $ "invalid line: " ++ s
 sln :: Bool -> String -> Int
 sln partA s = 
   let fn = if partA then id else decodeGame in
-  sum . map (gamePts . fn . parseLine) . lines $ s 
+  sum . map (uncurry getPoints . fn . parseLine) . lines $ s 
 
 -- | get the decoded game from the raw game input according to
 --   the rules of part B
 decodeGame :: Game -> Game
-decodeGame (a,b) = (a, getPlay (getEncodedResult b) a)
+decodeGame (a,b) = (a, decodeMove (getEncodedResult b) a)
 
--- | determine number of points for a move
-movePts :: Move -> Int
-movePts Rock     = 1
-movePts Paper    = 2
-movePts Scissors = 3
-
-resPts :: Result -> Int
-resPts Win  = 6
-resPts Draw = 3
-resPts Lose = 0
-
--- | get the points for a game
-gamePts :: Game -> Int
-gamePts (t, u) = resPts (result t u) + movePts u
-
--- | get the result of a game
-result :: Move -> Move -> Result
-result a b | a == b      = Draw
-result Rock     Paper    = Win
-result Paper    Scissors = Win
-result Scissors Rock     = Win
-result Rock     Scissors = Lose
-result Paper    Rock     = Lose
-result Scissors Paper    = Lose
-result a b = error $ "ASSERT FAIL: " ++ show a ++ ", " ++ show b
+-- | get the puzzle points of a game
+getPoints :: Move -> Move -> Int
+getPoints Scissors Scissors = 3 + 3
+getPoints Paper    Paper    = 3 + 2
+getPoints Rock     Rock     = 3 + 1
+getPoints Rock     Paper    = 6 + 2
+getPoints Paper    Scissors = 6 + 3
+getPoints Scissors Rock     = 6 + 1
+getPoints Rock     Scissors = 3
+getPoints Paper    Rock     = 1
+getPoints Scissors Paper    = 2
 
 -- | get the encoded result
 getEncodedResult :: Move -> Result
@@ -65,16 +52,16 @@ getEncodedResult = \case
   Scissors -> Win
 
 -- | get the move we should make to get a result given the other move
-getPlay :: Result -> Move -> Move
-getPlay Draw m        = m
-getPlay Win  Rock     = Paper
-getPlay Win  Paper    = Scissors
-getPlay Win  Scissors = Rock
-getPlay Lose Rock     = Scissors
-getPlay Lose Paper    = Rock
-getPlay Lose Scissors = Paper
+decodeMove :: Result -> Move -> Move
+decodeMove Draw m        = m
+decodeMove Win  Rock     = Paper
+decodeMove Win  Paper    = Scissors
+decodeMove Win  Scissors = Rock
+decodeMove Lose Rock     = Scissors
+decodeMove Lose Paper    = Rock
+decodeMove Lose Scissors = Paper
 
-{-| solve the puzzle part A -}
+{-| solve the puzzle for either part based on parameters -}
 solve02 :: Bool -> IO ()
 solve02 forPartA = do
   raw <- getFile "day02.txt"
