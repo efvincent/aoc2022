@@ -1,12 +1,12 @@
 {- DAY01 : https://adventofcode.com/2022/day/1 -}
-module Day01a 
+module Day01 
   ( solve01s
   , solve01
 ) where
 
 import Data.List.Split (splitOn)
 import Data.List (sortBy)
-import System.Environment (getEnv)
+import Util (getFile)
 
 {-| 
 
@@ -36,16 +36,6 @@ sumUp :: String -> (Int,Int)
 sumUp s = 
   let xs = map ((sum . map read) . words) . splitOn "\n\n" $ s in
   (maximum xs, sum . take 3 . sortBy (flip compare) $ xs)
-
-{-| Given a filename gets the contents of that file as a string. 
-    requires the environment variable @AOC2022_DATA@ to be set
-    to the path (without trailing slash) where the data files
-    are located. -}
-getFile :: String -> IO String 
-getFile file = do
-  datapath <- getEnv "AOC2022_DATA"
-  let fpath = datapath ++ "/" ++ file
-  readFile fpath
 
 {-| Solve the puzzle with sample data -}
 solve01s :: IO (Int,Int) 
