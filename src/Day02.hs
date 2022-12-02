@@ -34,9 +34,9 @@ decodeGame (a,b) = (a, decodeMove (getEncodedResult b) a)
 
 -- | get the puzzle points of a game
 getPoints :: Move -> Move -> Int
-getPoints Scissors Scissors = 3 + 3   -- draws
+getPoints Rock     Rock     = 3 + 1   -- draws
 getPoints Paper    Paper    = 3 + 2
-getPoints Rock     Rock     = 3 + 1
+getPoints Scissors Scissors = 3 + 3
 getPoints Rock     Paper    = 6 + 2   -- wins
 getPoints Paper    Scissors = 6 + 3
 getPoints Scissors Rock     = 6 + 1
