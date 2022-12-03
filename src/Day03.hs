@@ -1,9 +1,9 @@
 {- DAY03 : https://adventofcode.com/2022/day/3 -}
 module Day03 where
 
-import Util (getFile)
-import Data.Char (ord)
-import Data.List.Split (chunksOf)
+import Util             (getFile)
+import Data.Char        (ord)
+import Data.List.Split  (chunksOf)
 
 score :: Char -> Int
 score c | c > 'Z'   = ord c - 96
