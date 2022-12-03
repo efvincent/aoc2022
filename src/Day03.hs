@@ -16,7 +16,7 @@ score c | c > 'Z'   = ord c - 96
 sln03A :: String -> Int
 sln03A =
   let half s = let (l,r) = splitAt (length s `div` 2) s in [l,r] in
-  sum . map (score . head . intersect. half) . lines
+  sum . map (score . head . intersect . half) . lines
 
 {-| Part B - take the list of lines as chunks of 3, determine
     the group score for each chunk, take the sum -}
