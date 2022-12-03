@@ -12,6 +12,7 @@
     "**/brittany.yaml": true,
     "**/hie.yaml": true,
     "**/.ghci": true,
-    "**/.vscode": true
+    "**/.vscode": true,
+    "**/dist*": true
   }
 }
