@@ -11,6 +11,7 @@ dependencies:
 - transformers
 - monad-control
 - split
+- megaparsec
 
 ghc-options:
   - -Wall
