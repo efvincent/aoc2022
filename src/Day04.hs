@@ -1,7 +1,7 @@
 {- DAY04 : https://adventofcode.com/2022/day/4 -}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
-module Day04 where
+module Day04 (sln04A, sln04B) where
 
 import Data.Set         (Set, fromList, isSubsetOf, intersection)
 import Data.List.Split  (splitOn)
@@ -24,3 +24,11 @@ sln partA s =
 
     -- True when there's an intersection between the sets
     intr a b = not (null (intersection a b))
+
+-- | public facing part A solution function
+sln04A :: String -> Int
+sln04A = sln True
+
+-- | public facing part B solution function
+sln04B :: String -> Int
+sln04B = sln False

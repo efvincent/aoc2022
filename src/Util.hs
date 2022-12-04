@@ -63,9 +63,11 @@ getTxt smpl d = do
 solve :: Int -> (String -> Int) -> IO ()
 solve = solve' False
 
-{-| Solve the sample data for the day indicated by the parameter. See
-    documentation for @solve@ for information about puzzle file 
-    convention -}
+{-| Solve the sample data for the day indicated by the parameter. The
+    solution function of signature @(String -> Int)@ is passed as
+    a parameter (will have to generalize more later if they give
+    us a puzzle with soltion type other than @Int@). See documentation f
+    or @solve@ for information about puzzle file convention -}
 sample :: Int -> (String -> Int) -> IO ()
 sample = solve' True
 
