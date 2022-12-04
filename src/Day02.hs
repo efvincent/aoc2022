@@ -1,7 +1,5 @@
 {- DAY02 : https://adventofcode.com/2022/day/2 -}
-module Day02 (solve02)  where
-
-import Util (getFile)
+module Day02 (sln02A, sln02B)  where
 
 data Result = Win   | Lose | Draw     deriving Show
 data Move   = Paper | Rock | Scissors deriving (Show, Eq, Ord)
@@ -26,6 +24,12 @@ sln :: Bool -> String -> Int
 sln partA s = 
   let fn = if partA then id else decodeGame in
   sum . map (uncurry getPoints . fn . parseLine) . lines $ s 
+
+sln02A :: String -> Int
+sln02A = sln True
+
+sln02B :: String -> Int
+sln02B = sln False
 
 -- | get the decoded game from the raw game input according to
 --   the rules of part B
@@ -60,9 +64,3 @@ decodeMove Win  Scissors = Rock
 decodeMove Lose Rock     = Scissors
 decodeMove Lose Paper    = Rock
 decodeMove Lose Scissors = Paper
-
-{-| solve the puzzle for either part based on parameters -}
-solve02 :: Bool -> IO ()
-solve02 forPartA = do
-  raw <- getFile "day02.txt"
-  print (sln forPartA raw)

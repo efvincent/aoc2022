@@ -1,7 +1,7 @@
 {- DAY03 : https://adventofcode.com/2022/day/3 -}
-module Day03 (sln03A, sln03B, solve03) where
+module Day03 (sln03A, sln03B) where
 
-import Util             (getFile, intersect)
+import Util             (intersect)
 import Data.Char        (ord)
 import Data.List.Split  (chunksOf)
 
@@ -22,9 +22,3 @@ sln03A =
     the group score for each chunk, take the sum -}
 sln03B :: String -> Int
 sln03B = sum . map (score . head . intersect) . chunksOf 3 . lines
-
--- | Applies the solution (either sln03A or sln03B) to the puzzle data
-solve03 :: (String -> Int) -> IO ()
-solve03 fn = do
-  txt <- getFile "day03.txt"
-  print (fn txt)
