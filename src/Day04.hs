@@ -11,12 +11,12 @@ import Data.List.Split  (splitOn)
     the two sets intersect (part B) -}
 sln :: Bool -> String -> Int
 sln partA s =
-  let sets :: [[Set Int]]
-      sets = map (map (expand . map read . splitOn "-") . splitOn ",") . lines $ s
-      fn   = if partA then subs else intr 
+  let sets = map (map (expand . map read . splitOn "-") . splitOn ",") . lines $ s
+      fn   = if partA then subs else intr
   in  length . filter (\[a,b] -> fn a b) $ sets
   where
     -- Expand a 2 element list into a list ranging from a to b
+    expand :: [Int] -> Set Int
     expand [a,b] = fromList $ enumFromTo a b
 
     -- True when either set is a subset of the other
