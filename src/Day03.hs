@@ -21,14 +21,7 @@ sln03A =
 {-| Part B - take the list of lines as chunks of 3, determine
     the group score for each chunk, take the sum -}
 sln03B :: String -> Int
-sln03B = sum . map grpScore . chunksOf 3 . lines
-
-{-| Calc the group score. Group will be 3 lines long exactly, find
-    the intersection of 2 of the lines, and the intersection of that
-    with the third line. Again, there may be > 1 of the same char 
-    in the intersection, so take the head, and get the score -}
-grpScore :: [String] -> Int
-grpScore = score . head . intersect
+sln03B = sum . map (score . head . intersect) . chunksOf 3 . lines
 
 -- | Applies the solution (either sln03A or sln03B) to the puzzle data
 solve03 :: (String -> Int) -> IO ()
