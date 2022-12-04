@@ -1,12 +1,11 @@
 {- DAY01 : https://adventofcode.com/2022/day/1 -}
 module Day01 
-  ( solve01s
-  , solve01
-) where
+  ( sln01A
+  , sln01B
+  ) where
 
 import Data.List.Split (splitOn)
 import Data.List (sortBy)
-import Util (getFile)
 
 {-| 
 
@@ -32,19 +31,13 @@ import Util (getFile)
       5.3) sum the top 3
 
 -}
-sumUp :: String -> (Int,Int)
-sumUp s = 
+sln :: String -> (Int,Int)
+sln s = 
   let xs = map ((sum . map read) . words) . splitOn "\n\n" $ s in
   (maximum xs, sum . take 3 . sortBy (flip compare) $ xs)
 
-{-| Solve the puzzle with sample data -}
-solve01s :: IO (Int,Int) 
-solve01s = do
-  raw <- getFile "day01.sample.txt" 
-  pure $ sumUp raw
+sln01A :: String -> Int
+sln01A = fst . sln
 
-{-| solve the puzzle -}
-solve01 :: IO (Int,Int)
-solve01 = do
-  raw <- getFile "day01.txt"
-  pure $ sumUp raw
+sln01B :: String -> Int
+sln01B = snd . sln

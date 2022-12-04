@@ -16,6 +16,7 @@ executable aoc2022.exe
       Day01
       Day02
       Day03
+      Day04
       Util
       Paths_aoc2022
   hs-source-dirs:
