@@ -12,6 +12,7 @@ dependencies:
 - monad-control
 - split
 - megaparsec
+- regex-tdfa
 
 ghc-options:
   - -Wall
