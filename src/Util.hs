@@ -4,8 +4,13 @@ module Util
   , solve
   , sample
   , intersect 
+  , getNums
+  , Parts (..)
   ) where
 import System.Environment (getEnv)
+import Text.Regex.TDFA (AllTextMatches(..), (=~))
+
+data Parts = PartA | PartB deriving (Eq, Ord, Show)
 
 {-| Given a filename gets the contents of that file as a string. 
     requires the environment variable @AOC2022_DATA@ to be set
@@ -16,6 +21,11 @@ getFile file = do
   datapath <- getEnv "AOC2022_DATA"
   let fpath = datapath ++ "/" ++ file
   readFile fpath
+
+{-| Returns all the (natural) numbers from a string -}
+getNums :: String -> [Int]
+getNums s =
+  map read $ getAllTextMatches (s =~ ("[0-9]+" :: String))
 
 {-| Finds the intersection between multiple lists -}
 intersect :: Eq a => [[a]] -> [a]
