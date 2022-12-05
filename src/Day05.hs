@@ -23,9 +23,7 @@ The raw input for the puzzle looks like this:
 The first section are the "stacks". In this sample, they're stacks
 1, 2 and 3. Think of them being stacks of crates in a warehouse. 
 The second section is a series of instructions to move some number
-of crates from one stack to another. 
-
--}
+of crates from one stack to another. -}
 
 {-| A stack is a numbered list of "cargo", where each cargo is 
     represented by a character -}
@@ -107,7 +105,7 @@ solve05 :: IO (String,String)
 solve05 = do
   raw <- getPuzzle 5
   let [rawStacks, rawMoves] = splitOn "\n\n" raw
-  let stacks = parseStacks rawStacks
-  let moves  = parseMoves  rawMoves
-  let ans pa = applyMoves pa stacks moves
+  let stacks   = parseStacks rawStacks
+  let moves    = parseMoves  rawMoves
+  let ans part = applyMoves  part stacks moves
   pure (ans PartA, ans PartB)
