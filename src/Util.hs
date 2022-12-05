@@ -5,9 +5,12 @@ module Util
   , sample
   , intersect 
   , getNums
+  , Parts (..)
   ) where
 import System.Environment (getEnv)
 import Text.Regex.TDFA (AllTextMatches(..), (=~))
+
+data Parts = PartA | PartB deriving (Eq, Ord, Show)
 
 {-| Given a filename gets the contents of that file as a string. 
     requires the environment variable @AOC2022_DATA@ to be set
