@@ -61,7 +61,9 @@ sum . take 3
 ```
 First an explanation of each function and thier signatures, starting with `sum`. A simplified way of thinking of the type signature is as:
 
-`sum :: [Int] -> Int` 
+```haskell
+sum :: [Int] -> Int
+``` 
 
 In reality `sum` is generic; the first parameter is any "foldable" (think iterable) type; like the list `[Int]`. and rather than specifically `Int` the sum function can work over any `Num`. But for this discussion, but this works for now. **Sum** takes an array of `Int` and returns their sum.
 
@@ -80,7 +82,7 @@ take :: [a] -> [a]
 λ » take' [7,6,5,4,3]
 [7,6,5]
 ```
-_Note: the `λ> ` prompt is how I indicate something happening in the repl._
+_Note: the_ "` λ » `" _indicates a command entered in the Haskell repl. The_ `:type` _is a command entered into the repl to have it return the type of the expression._
 
 ### Back to Day 01
 Now we have all the tools we need to understand my generally not really interesting Day 01 solution.
@@ -175,4 +177,6 @@ When this is passed to the `sortBy` funciton, the sort comes out as descending r
 ```
 Next in the chain is `take 3` which we now know is a _curried function_ that's been _partially applied_. It will return a list of the first 3 elements from the input list, which is now sorted descending. In other words, the three biggest elements from the list. 
 
-Next is the `sum` funciton, which takes the list of 3 biggest elements, and returns the sum. 
+Next is the `sum` function, which takes the list of 3 biggest elements, and returns the sum. 
+
+_TO BE CONTINUED_
