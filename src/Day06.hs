@@ -9,9 +9,9 @@ import Util     (Parts(..))
     
     - @take@ the first N chars from the string param @s@, make a @Set@ from them
     - if that set has length N then: 
-      - return the position of last char, which is @idx@ + N 
+      + return the position of last char, which is @idx@ + N 
     - else we there's at least one repeat, so:
-      - call sln incrementing @idx@ and passing the tail of the input string @s@
+      + call sln incrementing @idx@ and passing the tail of the input string @s@
     -}
 sln :: Parts -> Int -> String -> Int
 sln _ _ [] = error "signal not found in input string"
