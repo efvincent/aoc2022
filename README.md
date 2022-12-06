@@ -2,7 +2,10 @@
 
 I'm happy to say that this year I've got a few peers from [Aetion](https://aetion.com) on a private leaderboard! It's always more fun when you're playing along with people you know.
 
-Like I've done before, I'm going to put some notes on each day (until I get lazy and stop doing so). Also as I've done before I'm doing AoC in Haskell again this year. Alghough I've branched out a bit in the last 12 months and have been studying language theory in the context of lambda calculus based purely functional languages (interpreters, compilers, type theory, proof assistants), Haskell is my default favorite language and I want to keep practicing and getting more adept it in its use.
+Like I've done with some degree of success before, I'm going to put some notes on each day (until I get lazy and stop doing so). Also as I've done before I'm doing AoC in Haskell again this year. Alghough I've branched out a bit in the last 12 months and have been studying language theory in the context of lambda calculus based purely functional languages (interpreters, compilers, type theory, proof assistants), Haskell is my default favorite language and I want to keep practicing and getting more adept it in its use.
+
+I'm also adding to this readme backwards, the latest AoC day that I've commented on will be just below this introduction. So if you want to go in order, head to the bottom :)
+
 
 ## Day 01 - [Camp Cleanup](https://adventofcode.com/2022/day/1)
 
@@ -21,7 +24,7 @@ I'll go into more detail for this one since it's so simple. One interesting bit 
 ```haskell
 let ([v1] = [exp1]; ... [vn] = [expn]) in [exp]
 ```
-It allows you to bind one or more expressions `exp1..expn` to a variables `v1..vn`, and then use those bound variables in the final expression `exp`. During the desugaring phase, Haskell will effectively substitute (inline) the bound expressions into the final expression, so this construct is computationally free. It does allow you to simplify the expression and make it easier to understand.
+It allows you to bind one or more expressions `exp1..expn` to a variables `v1..vn`, and then use those bound variables in the final expression `exp`. During an early phase of compilation, Haskell (more accurately, GHC, the defacto Haskell compiler) will _effectively_ substitute the bound expressions into the final expression, so this construct is computationally free. It does allow you to simplify the expression and make it easier to understand.
 
 In this case, use the `let` construct to bind `xs` to a list of integers `[Int]`. We'll take a look at how we get that list of integers, but first a couple of Haskell basics.
 
@@ -114,6 +117,22 @@ Finally that list of integers is passed to the `sum` function, which returns the
 
 Now for the rest of the solution function:
 
+#### Part A
+
+```haskell
+(maximum xs, sum . take 3 . sortBy (flip compare) $ xs)
+```
+This is a tuple, which is a heterogenious pair of two values. The first part of the tuple is `maximum xs`. This is the answer to part A of the puzzle. Once we've calulated all the sums, what's the biggest? The `maximum` function has this signature:
+
+```haskell
+maximum :: (Foldable t, Ord a) => t a -> a
+```
+This is a generic function with constraints. It's saying there's one parameter `t a` which is constrained to be a generic type `t` that has an implementation of the type class `Foldable`, and generic type `a` that implements `Ord`. Loosly translated, in our case, it takes a list of integers, and returns the biggest one. Only it doesn't have to be a list, other data structures are "foldable", and it doesn't have to be an integer, it just has to be orderable in order to find the "biggest" one.
+
+#### Part B
+
+The next part of the tuple returns the answer to Part B:
+
 ```haskell
 (maximum xs, sum . take 3 . sortBy (flip compare) $ xs)
 ```
@@ -177,6 +196,4 @@ When this is passed to the `sortBy` funciton, the sort comes out as descending r
 ```
 Next in the chain is `take 3` which we now know is a _curried function_ that's been _partially applied_. It will return a list of the first 3 elements from the input list, which is now sorted descending. In other words, the three biggest elements from the list. 
 
-Next is the `sum` function, which takes the list of 3 biggest elements, and returns the sum. 
-
-_TO BE CONTINUED_
+Next is the `sum` function, which takes the list of 3 biggest elements, and returns the sum. Which is the answer to part B... we're done!
