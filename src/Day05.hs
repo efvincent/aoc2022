@@ -1,4 +1,4 @@
-{- DAY05 : https://adventofcode.com/2022/day/4 -}
+{- DAY05 : https://adventofcode.com/2022/day/5 -}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 module Day05 (solve05) where
 
