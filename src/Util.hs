@@ -5,6 +5,7 @@ module Util
   , sample
   , intersect 
   , getNums
+  , startsWith
   , tup2
   , tup3
   , Parts (..)
@@ -20,7 +21,15 @@ data InputType = Sample | Puzzle deriving (Eq, Ord, Show)
 -- that in a reader monad and thread it through the relevant 
 -- functions
 year :: Int
-year = 15 
+year = 22 
+
+{-| Returns true if the second list starts with the first list -}
+startsWith :: Eq a => [a] -> [a] -> Bool
+startsWith target search
+  | length search > length target || null search || null target = False
+  | otherwise =
+    let target' = take (length search) target in
+    search == target'
 
 {-| Given a filename gets the contents of that file as a string. 
     requires the environment variable @AOC2022_DATA@ to be set
