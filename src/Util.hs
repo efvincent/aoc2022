@@ -20,7 +20,7 @@ data InputType = Sample | Puzzle deriving (Eq, Ord, Show)
 -- that in a reader monad and thread it through the relevant 
 -- functions
 year :: Int
-year = 15 
+year = 22 
 
 {-| Given a filename gets the contents of that file as a string. 
     requires the environment variable @AOC2022_DATA@ to be set
