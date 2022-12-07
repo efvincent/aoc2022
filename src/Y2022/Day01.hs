@@ -1,5 +1,5 @@
 {- DAY01 : https://adventofcode.com/2022/day/1 -}
-module Day01 (sln01A, sln01B) where
+module Y2022.Day01 (sln01A, sln01B) where
 
 import Data.List.Split (splitOn)
 import Data.List (sortBy)

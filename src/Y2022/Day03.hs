@@ -1,5 +1,5 @@
 {- DAY03 : https://adventofcode.com/2022/day/3 -}
-module Day03 (sln03A, sln03B) where
+module Y2022.Day03 (sln03A, sln03B) where
 
 import Util             (intersect)
 import Data.Char        (ord)

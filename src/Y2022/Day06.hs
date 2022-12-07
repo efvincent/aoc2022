@@ -1,5 +1,5 @@
 {- DAY06 : https://adventofcode.com/2022/day/6 -}
-module Day06 (sln06A, sln06B) where
+module Y2022.Day06 (sln06A, sln06B) where
 
 import Data.Set (fromList)
 import Util     (Parts(..))

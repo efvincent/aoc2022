@@ -13,13 +13,15 @@ build-type:     Simple
 executable aoc2022.exe
   main-is: Main.hs
   other-modules:
-      Day01
-      Day02
-      Day03
-      Day04
-      Day05
-      Day06
       Util
+      Y2015.Day01
+      Y2015.Day02
+      Y2022.Day01
+      Y2022.Day02
+      Y2022.Day03
+      Y2022.Day04
+      Y2022.Day05
+      Y2022.Day06
       Paths_aoc2022
   hs-source-dirs:
       src

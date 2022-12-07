@@ -1,7 +1,7 @@
 {- DAY04 : https://adventofcode.com/2022/day/4 -}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
-module Day04 (sln04A, sln04B) where
+module Y2022.Day04 (sln04A, sln04B) where
 
 import Data.Set         (Set, fromList, isSubsetOf, intersection)
 import Data.List.Split  (splitOn)

@@ -5,12 +5,22 @@ module Util
   , sample
   , intersect 
   , getNums
+  , tup2
+  , tup3
   , Parts (..)
   ) where
 import System.Environment (getEnv)
 import Text.Regex.TDFA (AllTextMatches(..), (=~))
 
-data Parts = PartA | PartB deriving (Eq, Ord, Show)
+data Parts     = PartA  | PartB  deriving (Eq, Ord, Show)
+data InputType = Sample | Puzzle deriving (Eq, Ord, Show)
+
+-- | default year for solve, getPuzzle, getSample functions
+-- TODO: get year from environment, default to current year, put
+-- that in a reader monad and thread it through the relevant 
+-- functions
+year :: Int
+year = 15 
 
 {-| Given a filename gets the contents of that file as a string. 
     requires the environment variable @AOC2022_DATA@ to be set
@@ -26,6 +36,15 @@ getFile file = do
 getNums :: String -> [Int]
 getNums s =
   map read $ getAllTextMatches (s =~ ("[0-9]+" :: String))
+
+tup2 :: [a] -> (a,a)
+tup2 (x:y:_)= (x,y)
+tup2 _ = error "must be at least 2 values in the list"
+
+tup3 :: [a] -> (a,a,a)
+tup3 (x:y:z:_) = (x,y,z)
+tup3 _ = error "must be at least 3 values in the list"
+
 
 {-| Finds the intersection between multiple lists -}
 intersect :: Eq a => [[a]] -> [a]
@@ -52,17 +71,19 @@ zpad digits n =
 
 {-| Internal solve, takes a boolean to determine if you're
     solving the sample (True) or the main puzzle (False) -}
-solve' :: Bool -> Int -> (String -> Int) -> IO ()
-solve' smpl d fn = do
-  str <- getTxt smpl d
+solve' :: Show a => Int -> InputType -> Int -> (String -> a) -> IO ()
+solve' yy it d fn = do
+  str <- getTxt yy it d
   print (fn str)
 
 {-| Gets the text for either the sample or puzzle data for
     the specified puzzle day. Files must follow the convention
     described in the documentation of @solve@ -}
-getTxt :: Bool -> Int -> IO String
-getTxt smpl d = do
-  getFile $ "day" ++ zpad 2 d ++ (if smpl then ".sample" else "") ++ ".txt"
+getTxt :: Int -> InputType -> Int -> IO String
+getTxt yy it d = do
+  getFile $ 
+    "Y20" ++ show yy ++ "/day" ++ zpad 2 d ++ 
+    (if it == Sample then ".sample" else "") ++ ".txt"
 
 {-| Solve the puzzle day indicated by the parameter. The puzzle data
     file must be in the directory indicated by system variable
@@ -70,24 +91,24 @@ getTxt smpl d = do
     @day??.[sample.]txt@, where @??@ is the zero padded day number
     and [sample.] is included for the sample data but not for the
     puzzle data. -}
-solve :: Int -> (String -> Int) -> IO ()
-solve = solve' False
+solve :: Show a => Int -> (String -> a) -> IO ()
+solve = solve' year Puzzle
 
 {-| Solve the sample data for the day indicated by the parameter. The
     solution function of signature @(String -> Int)@ is passed as
     a parameter (will have to generalize more later if they give
     us a puzzle with soltion type other than @Int@). See documentation f
     or @solve@ for information about puzzle file convention -}
-sample :: Int -> (String -> Int) -> IO ()
-sample = solve' True
+sample :: Show a => Int -> (String -> a) -> IO ()
+sample = solve' year Sample
 
 {-| Gets the sample data for a particular puzzle day. Intended for
     use in the repl -}
 getSample:: Int -> IO String
-getSample = getTxt True
+getSample = getTxt year Sample
 
 {-| Gets the puzzle data for a particular puzzle day. Intended for
     use in the repl -}
 getPuzzle:: Int -> IO String
-getPuzzle = getTxt False
+getPuzzle = getTxt year Puzzle
 

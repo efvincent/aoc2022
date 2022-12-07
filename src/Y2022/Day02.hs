@@ -1,5 +1,5 @@
 {- DAY02 : https://adventofcode.com/2022/day/2 -}
-module Day02 (sln02A, sln02B)  where
+module Y2022.Day02 (sln02A, sln02B)  where
 
 data Result = Win   | Lose | Draw     deriving Show
 data Move   = Paper | Rock | Scissors deriving (Show, Eq, Ord)

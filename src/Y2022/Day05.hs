@@ -1,11 +1,11 @@
 {- DAY05 : https://adventofcode.com/2022/day/5 -}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
-module Day05 (solve05) where
+module Y2022.Day05 (sln05A, sln05B) where
 
 import Data.Char                (isDigit)
 import Data.List.Split          (splitOn)
 import qualified Data.Map as M  (Map, fromList, insert, toList, (!))
-import Util                     (getPuzzle, getNums, Parts(..))
+import Util                     (getNums, Parts(..))
 
 {-
 The raw input for the puzzle looks like this:
@@ -101,11 +101,16 @@ applyMoves p stacks = map (head . snd) . M.toList . go stacks
     functions in this case since the answers are strings and not
     @Int@s. I will have to update my utility functions to be more
     flexible. -}
-solve05 :: IO (String,String)
-solve05 = do
-  raw <- getPuzzle 5
-  let [rawStacks, rawMoves] = splitOn "\n\n" raw
-  let stacks   = parseStacks rawStacks
-  let moves    = parseMoves  rawMoves
-  let ans part = applyMoves  part stacks moves
-  pure (ans PartA, ans PartB)
+sln :: Parts -> String -> String
+sln part raw =
+  let 
+    [rawStacks, rawMoves] = splitOn "\n\n" raw
+    stacks   = parseStacks rawStacks
+    moves    = parseMoves  rawMoves in
+  applyMoves part stacks moves 
+
+sln05A :: String -> String
+sln05A = sln PartA
+
+sln05B :: String -> String
+sln05B = sln PartB
