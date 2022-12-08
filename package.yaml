@@ -6,6 +6,7 @@ dependencies:
 - text
 - aeson
 - containers
+- vector
 - unordered-containers
 - mtl
 - transformers
