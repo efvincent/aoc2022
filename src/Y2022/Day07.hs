@@ -145,7 +145,6 @@ dirSizes predicate root =
       | otherwise    = go acc (map snd (M.toList entries) ++ t)
 
 {-- Solutions ----------------------------------------------------- 
-    
     Standard wrappers that can be leveraged by @Util.solve@ 
 -------------------------------------------------------------------}
 
