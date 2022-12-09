@@ -1,3 +1,4 @@
+{- DAY08 : https://adventofcode.com/2022/day/8 -}
 module Y2022.Day08 
   (sln08A, sln08B) 
 where
