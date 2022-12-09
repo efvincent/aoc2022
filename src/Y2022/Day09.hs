@@ -42,14 +42,10 @@ sln p s =
     (_,_,seen) = loop (h,body,S.singleton h) ins
   in length seen
   where
-
     {-| loops through instructions -}
     loop :: (Loc, [Loc], Seen) -> [Instr] -> (Loc, [Loc], Seen)
-    loop ans [] = ans
-    loop (h,body,seen) (i:instrs) =
-      let 
-        (h', body', seen') = moveHead h body i seen
-      in loop (h', body', seen') instrs 
+    loop ans           []         = ans
+    loop (h,body,seen) (i:instrs) = loop (moveHead h body i seen) instrs 
 
     {-| for each instruction, moves the entire rope, then 
         captures the last position in the seen set -}
@@ -63,9 +59,10 @@ sln p s =
         seen' = S.insert (last body') seen
       in moveHead h' body' (d,dist-1) seen'
 
-    {-| moves the body, assuming the head of the rope has been moved.
-        In part A, this is a noOp, in part B, this makes the rest of
-        the rope chase segment 1 that was moved in @moveHead@ -}
+    {-| moves the body, assuming the first segment b0 has been moved.
+        In part A, this is a noOp since there is only the head and one
+        segment b0 that is already moved. In part B, this makes the rest of
+        the rope chase segment b0 that was moved in @moveHead@ -}
     moveBody :: [Loc] -> [Loc]
     moveBody [b9] = [b9]
     moveBody (b0:b1:rest) =
