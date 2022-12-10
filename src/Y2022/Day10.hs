@@ -20,7 +20,7 @@ sln = reverse . go [] 0 0 1 0
   where
     go :: [(Int,Int)] -> Int -> Int -> Int -> Int -> [Instr] -> [(Int,Int)]
     -- base case, no more instructions
-    go acc _ _ _ _ [] = acc
+    go acc cyc _ _ xReg [] = (cyc,xReg):acc
     
     {- count down == 0, current op has processed. Apply `toAdd` to X register,
        determine next instruction, set new count down and toAdd values, 
@@ -50,7 +50,7 @@ sln10A =
 sln10B :: String -> String
 sln10B = intercalate "\n" . chunksOf 40 . map charAt . sln . parse
   where
-    charAt (cyc, s) = let cyc' = cyc `mod` 40 in if cyc' `elem` [s+1,s,s-1] then '█' else ' '
+    charAt (cyc, s) = let cyc' = cyc `mod` 40 in if cyc' `elem` [s+1,s,s-1] then '⬜' else '⬛'
 
 {-- Helpers -----------------------------------------------------}
 
