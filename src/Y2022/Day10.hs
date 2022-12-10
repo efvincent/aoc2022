@@ -1,66 +1,61 @@
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-module Y2022.Day10 where
+{- DAY10 : https://adventofcode.com/2022/day/10 -}
+module Y2022.Day10 (sln10A, sln10B) where
 
 import qualified Data.Set as S
-import Util (getSample, getPuzzle)
-import Debug.Trace (trace)
+import Data.List.Split (chunksOf)
+import Data.List (intercalate)
 
-samp :: IO String
-samp = getSample 10
-puzz :: IO String
-puzz = getPuzzle 10
+{-- Types --------------------------------------------------------}
 
-
+-- | only two operations, no op does nothing, ADDX adds a value to the X register
 data Instr = NOOP | ADDX Int deriving Show
+        
+{-- Solutions -----------------------------------------------------}
+
+{-| same basic solution for both parts; simulate the machine running,
+    capture the value of the X register on every tick. See individual
+    part solutions below for what happens next... -}
+sln :: [Instr] -> [(Int, Int)]
+sln = reverse . go [] 0 0 1 0
+  where
+    go :: [(Int,Int)] -> Int -> Int -> Int -> Int -> [Instr] -> [(Int,Int)]
+    -- base case, no more instructions
+    go acc _ _ _ _ [] = acc
+    
+    {- count down == 0, current op has processed. Apply `toAdd` to X register,
+       determine next instruction, set new count down and toAdd values, 
+       recursively call next go with the tail of the instruction list -}
+    go acc cyc _cDown@0 xReg toAdd instrs = 
+      let (cDown', toAdd', instrs') = 
+            case instrs of
+              (NOOP  :rest) -> (1, 0, rest)
+              (ADDX n:rest) -> (2, n, rest)
+      in go acc cyc cDown' (xReg+toAdd) toAdd' instrs'
+    
+    {- count down is not zero, we're still processing an op. Tick the cycle, 
+       decrement count down, recursively call go w/o consuming an instruction -} 
+    go acc cyc cDown xReg toAdd instrs =
+      let acc' = (cyc,xReg):acc 
+          cyc' = cyc + 1
+      in go acc' cyc' (cDown-1) xReg toAdd instrs 
+
+{-| In part A, we sample the X register at 6 different clock cycles by checking
+    the cycle number against a set of sample points. Then we multiply each pair
+    of (cycle,X-Register), and sum those products -}    
+sln10A :: String -> Int
+sln10A =
+  let sig = S.fromList [20, 60, 100, 140, 180, 220] in 
+  sum . map (uncurry (*)) . filter (flip S.member sig . fst) . sln . parse
+
+sln10B :: String -> String
+sln10B = intercalate "\n" . chunksOf 40 . map charAt . sln . parse
+  where
+    charAt (cyc, s) = let cyc' = cyc `mod` 40 in if cyc' `elem` [s+1,s,s-1] then '█' else ' '
+
+{-- Helpers -----------------------------------------------------}
 
 parse :: String -> [Instr]
 parse = map parseLine . lines
   where
     parseLine ['n','o','o','p'] = NOOP
     parseLine s = ADDX . read . drop 5 $ s
-
-interpret :: [Instr] -> Int
-interpret =
-  {-
-  go acc cyc cDown xReg toAdd instr -}
-  sum . go []  0   0     1    0
-
-  where
-    -- samp ans :     21  19   18   21  16   18
-    sig = S.fromList [20, 60, 100, 140, 180, 220] :: S.Set Int
-    go :: [Int] -> Int -> Int -> Int -> Int -> [Instr] -> [Int]
-
-    -- No more instructions case. Checking that we might still have a countdown
-    -- and a toAdd
-    go acc cyc cDown xReg toAdd [] =
-      let cyc' = cyc + 1
-          acc' =
-            if S.member cyc' sig 
-            then trace (" << A cyc:" ++ show cyc' ++ " xReg:" ++ show xReg ++ ">> ")  (cyc' * xReg):acc
-            else acc in
-      if cDown == 0
-      then acc'
-      else go acc' cyc' (cDown-1) 0 0 []
-      
-    go acc cyc 0     xReg toAdd instrs = 
-      let cyc' = cyc 
-          acc' = acc
-            -- if S.member cyc' sig 
-            -- then trace (" << B cyc:" ++ show cyc' ++ " xReg:" ++ show xReg ++ ">> ")  (cyc' * xReg):acc
-            -- else acc
-          (cDown', toAdd', instrs') = 
-            case instrs of
-              (NOOP  :rest) -> (1, 0, rest)
-              (ADDX n:rest) -> (2, n, rest)
-      in go acc' cyc' cDown' (xReg+toAdd) toAdd' instrs'
-
-    go acc cyc cDown xReg toAdd instrs =
-      let cyc' = cyc + 1
-          acc' = 
-            if S.member cyc' sig
-            then trace (" << C cyc:" ++ show cyc' ++ " xReg:" ++ show xReg ++ ">> ")  (cyc' * xReg):acc
-            else acc
-      in go acc' cyc' (cDown-1) xReg toAdd instrs 
-
-    -- go acc cyc cDown x 
-    
