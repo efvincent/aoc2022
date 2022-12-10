@@ -5,11 +5,17 @@ import qualified Data.Set as S
 import Data.List.Split (chunksOf)
 import Data.List (intercalate)
 
-{-- Types --------------------------------------------------------}
+{-- Types & Consts-------------------------------------------------}
 
 -- | only two operations, no op does nothing, ADDX adds a value to the X register
 data Instr = NOOP | ADDX Int deriving Show
-        
+
+onPixel :: Char
+onPixel = '\11036'
+
+offPixel :: Char
+offPixel = '\11035'
+
 {-- Solutions -----------------------------------------------------}
 
 {-| same basic solution for both parts; simulate the machine running,
@@ -50,7 +56,11 @@ sln10A =
 sln10B :: String -> String
 sln10B = intercalate "\n" . chunksOf 40 . map charAt . sln . parse
   where
-    charAt (cyc, s) = let cyc' = cyc `mod` 40 in if cyc' `elem` [s+1,s,s-1] then '⬜' else '⬛'
+    charAt (cyc, s) = 
+      let cyc' = cyc `mod` 40 in 
+      if cyc' `elem` [s+1,s,s-1] 
+      then onPixel
+      else offPixel
 
 {-- Helpers -----------------------------------------------------}
 
