@@ -13,6 +13,7 @@ build-type:     Simple
 executable aoc2022.exe
   main-is: Main.hs
   other-modules:
+      Fifo
       Util
       Y2015.Day01
       Y2015.Day02
@@ -26,6 +27,7 @@ executable aoc2022.exe
       Y2022.Day08
       Y2022.Day09
       Y2022.Day10
+      Y2022.Day11
       Paths_aoc2022
   hs-source-dirs:
       src
