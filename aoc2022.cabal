@@ -14,6 +14,7 @@ executable aoc2022.exe
   main-is: Main.hs
   other-modules:
       Fifo
+      Grid
       Util
       Y2015.Day01
       Y2015.Day02
@@ -56,12 +57,14 @@ executable aoc2022.exe
   ghc-options: -Wall -Wcompat -Wincomplete-uni-patterns -Wredundant-constraints -Wincomplete-record-updates -Widentities -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
+    , array
     , base >=4.7 && <5
     , containers
     , megaparsec
     , monad-control
     , mtl
     , regex-tdfa
+    , search-algorithms
     , split
     , text
     , transformers

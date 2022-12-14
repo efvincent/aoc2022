@@ -1,92 +1,53 @@
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-module Y2022.Day12 where
+module Y2022.Day12 (sln12) where
 
-import qualified Data.Map as M
-import Data.List.Split (splitOn)
-import Data.List       (sort, foldl')
-import Fifo            (Fifo, push, pop, fromList)
-import Util            (getNums, Parts (..), getSample, getPuzzle)
-import Data.Vector     ((!))
-import qualified Data.Vector as V
-import qualified Data.Set as S
+import Grid (Grid, grid, nbors4, assocs, (!))
+import qualified Data.List as List
+import Algorithm.Search (aStar, bfs)
+import GHC.Arr ((//))
+import Util (Parts (..))
 
-samp :: IO String
-samp = getSample 12
-puzz :: IO String
-puzz = getPuzzle 12
+type Hill  = Grid Char
+type Point = (Int,Int)
 
-type Grid = V.Vector (V.Vector Char)
+parse :: String -> Hill
+parse = grid . lines
 
-type Loc = (Int,Int)
+sln12 :: Parts -> String -> Int
+sln12 part s =
+  let g = parse s
+      f = if part == PartA then maybe 0 fst . solveA else maybe 0 length . solveB
+  in  f g
 
-data Checkpoint = Cp 
-  { _path :: [Loc]
-  , _opts :: [Loc]
-  } deriving Show
+get :: Char -> Hill -> Point
+get c g = case List.find ((== c) . snd) $ assocs g of
+  Just (p, _) -> p
+  Nothing -> error $ "Could not findOne " ++ show c
 
-type BackStack = [Checkpoint]
-
-data Puzzle = Puz 
-  { _grid   :: Grid
-  , _start  :: Loc
-  , _end    :: Loc 
-  , _mx     :: Int
-  , _my     :: Int
-  , _bstack :: BackStack
-  } deriving (Show)
-
-parse :: String -> Puzzle
-parse s =
-  let
-    g = V.fromList . map V.fromList . lines $ s in
-    Puz { _grid   = g
-        , _start  = findInGrid 'S' g
-        , _end    = findInGrid 'E' g 
-        , _mx     = V.length (g V.! 0) - 1
-        , _my     = V.length g - 1 
-        , _bstack = [] } 
+prepStartEnd :: Hill -> (Hill, Point, Point)
+prepStartEnd g = (g', start, end)
   where
-    findInGrid :: Char -> Grid -> Loc
-    findInGrid c g = 
-      case go 0 of
-        Just p -> p
-        Nothing -> error "invalid puzzle data"
-      where
-        maxIdx = V.length g - 1
-        go :: Int -> Maybe Loc
-        go y 
-          | y >= maxIdx = Nothing
-          | otherwise = case V.findIndex (== c) (g V.! y) of
-              Nothing -> go (y+1) 
-              Just x -> Just (x,y)
+    start = get 'S' g
+    end   = get 'E' g
+    g'    = g // [(start, 'a'), (end, 'z')]
 
-{-- algo:
+solveA :: Hill -> Maybe (Int, [Point])
+solveA og = aStar
+  (\p -> filter (isReachable g p) $ nbors4 g p)
+  (\_ _ -> 1)
+  (dist end)
+  (== end)
+  start
+  where
+    (g, start, end) = prepStartEnd og
+    dist (x1,y1) (x2,y2) = abs (x1 - x2) + (y1 - y2)
 
-    from the curent point         <- backtrack to here
-    get list of choices           <- continue
-    are there any viable choices?
-      no - backtrack by popping state off the stack
-      yes -
-        pick first, remove it from choices
-        push (current path, unused choices) onto stack
-        make move
-        is this part of one of the other paths?
-          yes - backtrack
-        is it a solution?
-          yes - is it shorter than current shortest?
-            yes - it's the new shortest, backtrack
-            no - backtrack
-          no - continue
+solveB :: Hill -> Maybe [(Int,Int)]
+solveB og = bfs
+  (\p -> filter (flip (isReachable g) p) $ nbors4 g p)
+  ((== 'a') . (g !))
+  end
+  where
+    (g, _start, end) = prepStartEnd og
 
-        
-
-
-
-
--}
-findPath =
-  undefined
-
-
-              
-
+isReachable :: Hill -> Point -> Point -> Bool
+isReachable g p1 p2 = succ (g ! p1) >= g ! p2
