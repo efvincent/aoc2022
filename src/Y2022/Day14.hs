@@ -57,16 +57,16 @@ parse = S.fromList
 
 {-| get the points in a line segment -}
 segPoints :: Segment -> [Point]
-segPoints locs@(l1,l2) =
-  go [l1]
+segPoints endpoints@(p1,p2) =
+  go [p1]
   where
-    (dx,dy) = segSlope locs
+    (dx,dy) = segSlope endpoints
     go :: [Point] -> [Point]
     go [] = []
-    go (h@(x,y):t) =
-      let h' = (x+dx,y+dy) in
-      if h' == l2 then h':h:t
-      else go (h':h:t)
+    go (curPoint@(x,y):pts) =
+      let newPoint = (x+dx,y+dy) in
+      if newPoint == p2 then newPoint:curPoint:pts
+      else go (newPoint:curPoint:pts)
 
 {-| find the slope of a line segment normalized to 1 -}
 segSlope :: Segment -> Slope
