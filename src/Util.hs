@@ -58,7 +58,7 @@ getFile file = do
 {-| Returns all the (natural) numbers from a string -}
 getNums :: String -> [Int]
 getNums s =
-  map read $ getAllTextMatches (s =~ ("[0-9]+" :: String))
+  map read $ getAllTextMatches (s =~ ("[-]?[0-9]+" :: String))
 
 tup2 :: [a] -> (a,a)
 tup2 (x:y:_)= (x,y)

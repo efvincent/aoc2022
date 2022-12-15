@@ -1,11 +1,10 @@
-{-# OPTIONS_GHC -Wno-unused-imports #-}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 module Y2022.Day13 (sln13) where
 
-import Util            (getNums, Parts (..), getSample, getPuzzle)
-import Data.Char (isDigit)
+import Util            (Parts (..))
+import Data.Char       (isDigit)
 import Data.List.Split (chunksOf)
-import Data.List (sort)
+import Data.List       (sort)
 
 data Packet
   = N Int
@@ -18,11 +17,6 @@ instance Ord Packet where
   compare (N x)    y  = compare (L [N x]) y
   compare    x  (N y) = compare x         (L [N y])
   compare (L x) (L y) = compare x          y
-
-samp :: IO String
-samp = getSample 13
-puzz :: IO String
-puzz = getPuzzle 13
 
 parse :: String -> [Packet]
 parse =

@@ -32,6 +32,7 @@ executable aoc2022.exe
       Y2022.Day12
       Y2022.Day13
       Y2022.Day14
+      Y2022.Day15
       Paths_aoc2022
   hs-source-dirs:
       src
