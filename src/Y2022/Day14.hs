@@ -24,22 +24,22 @@ sln14 part = sln part . parse
     pile all the way up to (500,0) -}
 sln :: Parts -> S.Set Point -> Int
 sln part points =
-  go [] points (500,0)
+  go 0 points (500,0)
   where
     maxY = let adjust = if part == PartA then 0 else 2 in
             (+ adjust) . maximum . map snd . S.toList $ points
-    go :: [Point] -> Set Point -> Point -> Int
+    go :: Int -> Set Point -> Point -> Int
     go acc pts p
-      | p `S.member` pts = length acc
+      | p `S.member` pts = acc
       | otherwise =
         case find (\p' -> not $ p' `S.member` pts) (nexts p) of
           Nothing ->
-            go (p:acc) (S.insert p pts) (500,0)
+            go (acc+1) (S.insert p pts) (500,0)
           Just p'@(_,y') ->
             if y' == maxY then
               if part == PartA
-              then length acc
-              else go (p:acc) (S.insert p pts) (500,0)
+              then acc
+              else go (acc+1) (S.insert p pts) (500,0)
             else go acc pts p'
 
 {-- Helpers -----------------------------------------------------}
