@@ -8,6 +8,8 @@ module Util
   , startsWith
   , tup2
   , tup3
+  , pairs
+  , signOf
   , Parts (..)
   ) where
 import System.Environment (getEnv)
@@ -22,6 +24,18 @@ data InputType = Sample | Puzzle deriving (Eq, Ord, Show)
 -- functions
 year :: Int
 year = 22 
+
+signOf :: Int -> Int -> Int
+signOf x n | n < 0     = x * (-1)
+           | otherwise = x
+
+{-| pairs elements of a list by twos. 
+    Ex: [1,2,3,4] -> [(1,2),(2,3),(3,4)] -}
+pairs :: [a] -> [(a,a)]
+pairs []         = []
+pairs [_]        = error "need at least 2 elements"
+pairs [a,b]      = [(a,b)]
+pairs (a:b:rest) = (a,b) : pairs (b:rest)
 
 {-| Returns true if the second list starts with the first list -}
 startsWith :: Eq a => [a] -> [a] -> Bool

@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
-module Y2022.Day13 (sln13, puzz, samp) where
+module Y2022.Day13 (sln13) where
 
 import Util            (getNums, Parts (..), getSample, getPuzzle)
 import Data.Char (isDigit)
