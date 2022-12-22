@@ -10,6 +10,7 @@ module Util
   , tup3
   , pairs
   , signOf
+  , remove
   , Parts (..)
   ) where
 import System.Environment (getEnv)
@@ -28,6 +29,10 @@ year = 22
 signOf :: Int -> Int -> Int
 signOf x n | n < 0     = x * (-1)
            | otherwise = x
+
+{-| Removes an element from a list -}
+remove :: Eq a => a -> [a] -> [a]
+remove a = filter (/= a)
 
 {-| pairs elements of a list by twos. 
     Ex: [1,2,3,4] -> [(1,2),(2,3),(3,4)] -}

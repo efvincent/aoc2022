@@ -1,0 +1,24 @@
+
+graph {
+AA [shape=record label="AA|0"]
+  BB [shape=record label="BB|13"]
+  CC [shape=record label="CC|2"]
+  DD [shape=record label="DD|20"]
+  EE [shape=record label="EE|3"]
+  FF [shape=record label="FF|0"]
+  GG [shape=record label="GG|0"]
+  HH [shape=record label="HH|22"]
+  II [shape=record label="II|0"]
+  JJ [shape=record label="JJ|21"]
+  
+  BB -- AA [label=" 1"]
+  CC -- BB [label=" 1"]
+  DD -- CC [label=" 1"]
+  DD -- AA [label=" 1"]
+  EE -- DD [label=" 1"]
+  FF -- EE [label=" 1"]
+  GG -- FF [label=" 1"]
+  HH -- GG [label=" 1"]
+  II -- AA [label=" 1"]
+  JJ -- II [label=" 1"]
+}
