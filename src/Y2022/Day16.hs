@@ -1,7 +1,5 @@
 {-# LANGUAGE BlockArguments #-}
-module Y2022.Day16
--- (sln16) 
-where
+module Y2022.Day16 (sln16) where
 
 import qualified Data.Set as S
 import qualified Data.Map as M
@@ -10,10 +8,7 @@ import Data.Map        (Map)
 import Data.List       (nub, foldl', intercalate, tails)
 import Text.Regex.TDFA (AllTextMatches(..), (=~))
 import Data.Maybe ( maybeToList, mapMaybe )
-import Util            (getNums, Parts (..), getSample, getPuzzle)
-
-samp = getSample 16
-puzz = getPuzzle 16
+import Util            (getNums, Parts (..))
 
 type ValveId = String
 type Cost = Int
@@ -90,9 +85,6 @@ optimize valves =
                                                               else if v2 == vId then Just (v1,c)
                                                               else Nothing) newPaths
             in Just (V vId f others'')
--- pathsFor :: String -> Graph -> [Path]
--- pathsFor s G{_paths=paths} =
---   S.toList . S.filter (\(P n1 n2 _) -> n1 == s || n2 == s) $ paths
 
 parse :: String -> Valves
 parse = M.fromList . map parseLine . lines
@@ -128,7 +120,7 @@ floydWarshall keys =
 
 sln16 :: Parts -> String -> Int
 sln16 part str =
-  let valves = parse $ str
+  let valves = parse str
       valves' = M.elems valves
       dists1 = M.fromList [((vId,v),c) | V vId  _ vs <- valves', (v,c) <- vs]
       dists2 = floydWarshall [vId | V vId _ _ <- valves'] dists1
