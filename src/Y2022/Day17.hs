@@ -64,7 +64,7 @@ placeRock (rh@(Rock _ height):rt, board, jets) =
   -- where
 go :: Rock -> Board -> [Jet] -> (Board, [Jet])
 go r@(Rock _ _) b (jh:jt) =
-  let r'@(Rock pts _) = jetRock jh r b
+  let r'@(Rock pts _) = jetRock jh r 
   in case dropRock r' b of
     Just r'' -> go r'' b jt
     Nothing -> (S.union b pts, jt)
@@ -74,30 +74,34 @@ go r@(Rock _ _) b (jh:jt) =
 {-| jets a rock left or right and return the rock's new position,
     which may not have changed if there was something in the way
     or if the rock went out of bounds -}
-jetRock :: Jet -> Rock -> Board -> Rock
-jetRock j r b =
+jetRock :: Jet -> Rock -> Rock
+jetRock j r =
   let f = if j == L then left else right
       r' = moveRock f r
-  in fromMaybe r (checkRock r' b)
+  in fromMaybe r (checkWall r')
+
+checkWall :: Rock -> Maybe Rock
+checkWall r@(Rock pts _) =
+  let xs = S.map (\(P x _) -> x) pts
+      minX = minimum xs
+      maxX = maximum xs
+  in if minX >= 0 && maxX <= 6 then Just r else Nothing
 
 {-| returns true if rock does not conflict with the board -}
 checkRock :: Rock -> Board -> Maybe Rock
 checkRock r@(Rock pts _) b =
-  let xs = S.map (\(P x _) -> x) pts
-      minX = minimum xs
-      maxX = maximum xs
-      overlap = S.intersection pts b
-      overlap' = if null overlap then overlap else (trace ("intersection:" ++ show overlap ++ " pts:" ++ show pts ++ " board:" ++ show b) overlap)
-  in if minX >= 0 && maxX <= 6 && null overlap'
+  let overlap = S.intersection pts b
+      -- overlap' = if null overlap then overlap else (trace ("intersection:" ++ show overlap ++ " pts:" ++ show pts ++ " board:" ++ show b) overlap)
+  in if null overlap
      then Just r 
      else Nothing
 
 {-| slides a rock in the direction of the jet, so long as it's
     not blocked by one of the pieces on the board -}
-slide :: Jet -> Rock -> Board -> Rock
-slide j r b =
-  let r' = jetRock j r b
-  in fromMaybe r $ checkRock r' b
+-- slide :: Jet -> Rock -> Board -> Rock
+-- slide j r b =
+--   let r' = jetRock j r 
+--   in fromMaybe r $ checkRock r' b
 
 {-| drops a rock down one and returns Just the rock at the new
     position, or if not possible, returns Nothing -}

@@ -1,5 +1,6 @@
 module Main where
+import Y2022.Day17 (pb, sln17, ij)
 
 main :: IO ()
 main = do
-  putStrLn "hw!"
+  pb $ sln17 3 ij

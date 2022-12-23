@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
-module Y2022.Day17 () where
+module Y2022.Day17a () where
 import Util (getSample, getPuzzle)
 
 samp :: IO String
