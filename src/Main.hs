@@ -2,4 +2,4 @@ module Main where
 
 main :: IO ()
 main = do
-  putStrLn "hw!"
+  putStrLn "AoC 2022"

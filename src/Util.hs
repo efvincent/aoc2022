@@ -11,6 +11,7 @@ module Util
   , pairs
   , signOf
   , remove
+  , uncurry3
   , Parts (..)
   ) where
 import System.Environment (getEnv)
@@ -26,6 +27,11 @@ data InputType = Sample | Puzzle deriving (Eq, Ord, Show)
 year :: Int
 year = 22 
 
+{-| same as uncurry, except for functions of 3 arguments -}
+uncurry3 :: (a -> b -> c -> d) -> (a,b,c) -> d
+uncurry3 f (a,b,c) = f a b c
+
+{-| returns @x@ negated if @n@ is negative, unchanged if positive -}
 signOf :: Int -> Int -> Int
 signOf x n | n < 0     = x * (-1)
            | otherwise = x
