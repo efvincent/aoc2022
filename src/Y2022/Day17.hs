@@ -1,126 +1,131 @@
+{-# OPTIONS_GHC -Wno-unused-imports #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Y2022.Day17 where
-import Util (getSample, getPuzzle)
+
+import Data.Set (Set)
+import qualified Data.Set as S
+import Util (getSample, getPuzzle, uncurry3)
+import Data.Foldable (foldl')
+import Data.Maybe (fromMaybe)
+import Data.List (sortBy, intercalate)
+import Data.List.Split (chunksOf)
+import Debug.Trace (trace)
 
 samp :: IO String
 samp = getSample 17
 puzz :: IO String
 puzz = getPuzzle 17
 
-data Move = L | R deriving Show
+ij :: [Jet]
+ij = parse ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
 
-type Moves = [Move]
+{-- Types & Consts-------------------------------------------------}
 
-type Board = [Int]    -- max Y (height) at each of the 7 column indexes
+data Jet = L | R deriving (Show, Eq)
 
-parse :: String -> Moves
-parse = map (\c -> if c == '<' then L else R)
+data Point = P Int Int
+  deriving (Ord,Show,Eq)
 
-{-
-    - board is 7 units wide
-    - each rock begins so that:
-      - its left edge 2 units from the left wall
-      - its bottom edge is 3 units above the highest 
-        rock in the wall (or the floor when there are no rocks)
-    - pieces:
+data Rock = Rock (Set Point) Int
+  deriving Show
+
+type Board = Set Point
+
+initBoard :: Board
+initBoard = S.fromList (map (`P` 0) [0..6])
+
+down,left,right :: Point
+down  = P 0 (-1)
+left  = P (-1) 0
+right = P 1 0
 
 
-    0 1 2 3  
-    -------
-    # # # # | 0         (0,0), (1,0), (2,0), (3,0)
+rocks :: [Rock]
+rocks = cycle $ map (moveRock (P 2 0))
+  [ Rock (S.fromList [P 0 0, P 1 0, P 2 0, P 3 0]       ) 1
+  , Rock (S.fromList [P 1 2, P 0 1, P 1 1, P 2 1, P 1 0]) 3
+  , Rock (S.fromList [P 2 2, P 2 1, P 0 0, P 1 0, P 2 0]) 3
+  , Rock (S.fromList [P 0 3, P 0 2, P 0 1, P 0 0]       ) 4
+  , Rock (S.fromList [P 0 1, P 1 1, P 0 0, P 1 0]       ) 2]
 
-    0 1 2
-    -----
-      #   | 2           (1,2), (0,1), (1,1), (2,1), (1,0)
-    # # # | 1
-      #   | 0
 
-    0 1 2
-    -----
-        # | 2           (2,2), (2,1), (0,0), (1,0), (2,0)
-        # | 1
-    # # # | 0
+{-- Solutions----------------------------------------------------}
 
-    0
-    -
-    # | 3               (0,3), (0,2), (0,1), (0,0)
-    # | 2
-    # | 1
-    # | 0
+sln17 :: Int -> [Jet] -> Board
+sln17 n jets =
+  let (_,board',_) = iterate placeRock (rocks, initBoard, jets) !! n
+  in board'
 
-    0 1
-    ---
-    # # | 1             (0,1), (1,1), (0,0), (1,0)
-    # # | 0
+placeRock :: ([Rock],Board, [Jet]) -> ([Rock],Board,[Jet])
+placeRock (rh@(Rock _ height):rt, board, jets) =
+  let r = moveRock (P 0 (maxH board + height + 3)) rh
+      (board', jets') = go r board jets
+  in (rt, board', jets')
+  -- where
+go :: Rock -> Board -> [Jet] -> (Board, [Jet])
+go r@(Rock _ _) b (jh:jt) =
+  let r'@(Rock pts _) = jetRock jh r b
+  in case dropRock r' b of
+    Just r'' -> go r'' b jt
+    Nothing -> (S.union b pts, jt)
 
-    -}
+{-- Helpers -----------------------------------------------------}
 
-type Point = (Int,Int)
-data Piece = P
-    { _points :: [(Int,Int)]
-    , _height :: Int }
-    deriving (Show)
+{-| jets a rock left or right and return the rock's new position,
+    which may not have changed if there was something in the way
+    or if the rock went out of bounds -}
+jetRock :: Jet -> Rock -> Board -> Rock
+jetRock j r b =
+  let f = if j == L then left else right
+      r' = moveRock f r
+  in fromMaybe r (checkRock r' b)
 
-type Pieces = [Piece]
+{-| returns true if rock does not conflict with the board -}
+checkRock :: Rock -> Board -> Maybe Rock
+checkRock r@(Rock pts _) b =
+  let xs = S.map (\(P x _) -> x) pts
+      minX = minimum xs
+      maxX = maximum xs
+      overlap = S.intersection pts b
+      overlap' = if null overlap then overlap else (trace ("intersection:" ++ show overlap ++ " pts:" ++ show pts ++ " board:" ++ show b) overlap)
+  in if minX >= 0 && maxX <= 6 && null overlap'
+     then Just r 
+     else Nothing
 
-{-| limits indicate how far from the bottom of a starting rock the
-    floor or highest rock is in any of the 7 columns wide of the board. 
-    So for example, the starting rock on the starting board looks like:
-    
-    |oo####o|    
-    |ooooooo|
-    |ooooooo|
-    |ooooooo|
-    ---------
+{-| slides a rock in the direction of the jet, so long as it's
+    not blocked by one of the pieces on the board -}
+slide :: Jet -> Rock -> Board -> Rock
+slide j r b =
+  let r' = jetRock j r b
+  in fromMaybe r $ checkRock r' b
 
-    and the limits are [3,3,3,3,3,3,3]
-    with the first move of > in the sample, the next state is
+{-| drops a rock down one and returns Just the rock at the new
+    position, or if not possible, returns Nothing -}
+dropRock :: Rock -> Board -> Maybe Rock
+dropRock r b =
+  let r' = moveRock down r
+  in checkRock r' b
 
-    |ooo####|
-    |ooooooo|
-    |ooooooo|
-    ---------
+{-| produces an infinite array of jets -}
+parse :: String -> [Jet]
+parse = let pc '<' = L ; pc '>' = R in cycle . map pc
 
-    the limits are now [2,2,2,2,2,2,2]    
+pb :: Board -> IO ()
+pb b =
+  let mH = maxH b
+      coords = chunksOf 7 . sortBy (\(P _ y) (P _ y') -> y' `compare` y) $ [P x y | y <- [mH, (mH-1)..1], x <- [0..6]]
+      strs = intercalate "\n" $ map ((\s -> '|':s ++ "|") . map mcoord) coords
+  in putStrLn $ strs ++ "\n+-------+"
+  where
+    mcoord :: Point -> Char
+    mcoord c =
+      if c `S.member` b then '#' else '.'
 
--}
-startingBoard :: Board
-startingBoard = replicate 7 0
+maxH :: Board -> Int
+maxH = foldl' (\acc (P _ y) -> if acc < y then y else acc) 0
 
-pieces :: [Piece]
-pieces = 
-    let ps =
-          [ P [(0,0), (1,0), (2,0), (3,0)] 1
-          , P [(1,2), (0,1), (1,1), (2,1), (1,0)] 3
-          , P [(2,2), (2,1), (0,0), (1,0), (2,0)] 3
-          , P [(0,3), (0,2), (0,1), (0,0)] 4
-          , P [(0,1), (1,1), (0,0), (1,0)] 2] 
-    in map (\(P pts h) -> P (map (\(x,y) -> (x + 2,y)) pts) h) ps
+move :: Point -> Point -> Point
+move (P x1 y1) (P x2 y2) = P (x1+x2) (y1+y2)
 
-{-
-algo:
-    - (A) p = next piece @ starting location for board
-    - (B) move = next move
-    - if no next move, then DONE
-    - p' = apply move p
-    - if fits p' then
-      - p = p'
-    - else it doesn't fit going sideways
-      - p = p 
-    - p' = apply move_down p 
-    - if fits p' then 
-      - p = p' 
-      - (B)
-    - else it doesn't fit going down
-      - update board p
-      - (A)
-    - (B)
--}
-
--- sln :: Moves -> Int
--- sln moves =
---   undefined
---   where
---     go :: Board -> Pieces -> Moves -> Piece -> Board
---     go board ps [] p = maximum board
---     go board ps (h:t) p = undefined
-
+moveRock :: Point -> Rock -> Rock
+moveRock p (Rock pts n) = Rock (S.map (move p) pts) n
