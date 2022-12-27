@@ -13,8 +13,11 @@ build-type:     Simple
 executable aoc2022.exe
   main-is: Main.hs
   other-modules:
+      Coord
+      Coord3
       Fifo
       Grid
+      Search
       Util
       Y2015.Day01
       Y2015.Day02
@@ -35,6 +38,7 @@ executable aoc2022.exe
       Y2022.Day15
       Y2022.Day16
       Y2022.Day17
+      Y2022.Day18
       Paths_aoc2022
   hs-source-dirs:
       src
