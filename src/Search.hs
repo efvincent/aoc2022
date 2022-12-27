@@ -20,7 +20,8 @@ where
 
 import qualified Data.Set as S
 
--- | depth first search
+-- | depth first search, first pattern is the next state function, second
+--   is the starting state. The search is found when there's no next state.
 dfs 
   :: Ord a      -- ^ states being searched must have @Ord@ instance
   => (a -> [a]) -- ^ calculate possible next states from current state

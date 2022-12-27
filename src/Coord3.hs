@@ -15,11 +15,15 @@ in the AoC puzzles.
 {-# LANGUAGE DeriveGeneric, DeriveDataTypeable #-}
 
 module Coord3 
-  ( boundingBox
+  ( Coord3(..)
+  , boundingBox
   , manhattan
   , mapCoord
   , zipCoord
-  , origin)
+  , origin
+  , neighbors
+  , from3Tuple
+  , to3Tuple)
 where
 
 import Data.Data (Data)
@@ -45,6 +49,21 @@ manhattan
   -> Int      -- ^ distance between two coordinates
 manhattan (C3 x1 y1 z1) (C3 x2 y2 z2) =
   abs (x1 - x2) + abs (y1 - y2) + abs (z1 - z2)
+
+-- | returns the neighbors of the coordinate, not including diagonals
+neighbors :: Coord3 -> [Coord3]
+neighbors (C3 x y z) =
+  [ C3 (x+1) y z, C3 (x-1) y z
+  , C3 x (y+1) z, C3 x (y-1) z
+  , C3 x y (z+1), C3 x y (z-1)] 
+
+-- | converts a 3-tuple of Ints to a Coord3
+from3Tuple :: (Int, Int, Int) -> Coord3
+from3Tuple (x,y,z) = C3 x y z
+
+-- | converts a Coord3 to a 3-tuple
+to3Tuple :: Coord3 -> (Int, Int, Int)
+to3Tuple (C3 x y z) = (x,y,z)
 
 -- | calculate the bounding box of a @Foldable@ of coordinates
 boundingBox
