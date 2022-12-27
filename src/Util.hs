@@ -103,7 +103,6 @@ tup3 :: [a] -> (a,a,a)
 tup3 (x:y:z:_) = (x,y,z)
 tup3 _ = error "must be at least 3 values in the list"
 
-
 {-| Finds the intersection between multiple lists -}
 intersect :: Eq a => [[a]] -> [a]
 intersect [] = [] 

@@ -11,6 +11,7 @@ import Data.Foldable (foldl')
 import Data.Maybe (fromMaybe)
 import Data.List (sortBy, intercalate)
 import Data.List.Split (chunksOf)
+import Coord (Coord(..), left, right, above)
 
 samp :: IO String
 samp = getSample 17
@@ -31,23 +32,23 @@ ij = parse ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
 
     0 1 2 3  
     -------
-    # # # # | 0         (0,0), (1,0), (2,0), (3,0)
+    # # # # | 0         (0,0), (0,1), (0,2), (0,3)
 
     0 1 2
     -----
-      #   | 2           (1,2), (0,1), (1,1), (2,1), (1,0)
+      #   | 2           (2,1), (1,0), (1,1), (1,2), (0,1)
     # # # | 1
       #   | 0
 
     0 1 2
     -----
-        # | 2           (2,2), (2,1), (0,0), (1,0), (2,0)
+        # | 2           (2,2), (1,2), (0,0), (0,1), (0,2)
         # | 1
     # # # | 0
 
     0
     -
-    # | 3               (0,3), (0,2), (0,1), (0,0)
+    # | 3               (3,0), (2,0), (1,0), (0,0)
     # | 2
     # | 1
     # | 0
@@ -63,29 +64,20 @@ ij = parse ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
 
 data Jet = L | R deriving (Show, Eq)
 
-data Point = P
-  { _x :: Int
-  , _y :: Int } deriving (Ord,Show,Eq)
+type Rock = Set Coord
 
-type Rock = Set Point
-
-type Board = Set Point
+type Board = Set Coord
 
 initBoard :: Board
-initBoard = S.fromList (map (`P` 0) [0..6])
-
-down,left,right :: Point
-down  = P 0 (-1)
-left  = P (-1) 0
-right = P 1 0
+initBoard = S.fromList [C 0 x | x <- [0..6]]
 
 rocks :: [Rock]
-rocks = cycle $ map (moveRock (P 2 0))
-  [ S.fromList [P 0 0, P 1 0, P 2 0, P 3 0]
-  , S.fromList [P 1 2, P 0 1, P 1 1, P 2 1, P 1 0]
-  , S.fromList [P 2 2, P 2 1, P 0 0, P 1 0, P 2 0]
-  , S.fromList [P 0 3, P 0 2, P 0 1, P 0 0]
-  , S.fromList [P 0 1, P 1 1, P 0 0, P 1 0]]
+rocks = cycle $ map (moveRock (C 0 2))
+  [ S.fromList [C 0 0, C 0 1, C 0 2, C 0 3]
+  , S.fromList [C 2 1, C 1 0, C 1 1, C 1 2, C 0 1]
+  , S.fromList [C 2 2, C 1 2, C 0 0, C 0 1, C 0 2]
+  , S.fromList [C 3 0, C 2 0, C 1 0, C 0 0]
+  , S.fromList [C 0 1, C 1 1, C 0 0, C 1 0]]
 
 {-- Solutions----------------------------------------------------}
 
@@ -93,7 +85,7 @@ testA :: IO ()
 testA = do
   s <- getPuzzle 17
   let ans = sln17A s
-  let msg =
+      msg =
         if ans == 3186 then "PASS"
         else "FAIL : Expecting 3186, got " ++ show ans
   putStrLn msg
@@ -115,7 +107,7 @@ sln n jets =
     settles by calling @jetAndDrop@ -}
 placeRock :: ([Rock],Board, [Jet]) -> ([Rock],Board,[Jet])
 placeRock (rh:rt, board, jets) =
-  let startingRock = moveRock (P 0 (maxY board + 4)) rh   -- move the rock to 3 above top of puzzle
+  let startingRock = moveRock (C (maxY board + 4) 0) rh   -- move the rock to 3 above top of puzzle
       (boards', jets') = jetAndDrop startingRock board jets
   in (rt, boards', jets')
 
@@ -138,7 +130,7 @@ jetAndDrop origRock board (jh:jt) =
 jetRock :: Jet -> Rock -> Board -> Rock
 jetRock j originalRock b =
   let movement     = if j == L then left else right
-      slid         = moveRock movement originalRock
+      slid         = S.map movement originalRock
       inBoundsRock = fromMaybe originalRock (checkWall slid)
       okRock       = fromMaybe originalRock (checkBoard inBoundsRock b)
   in okRock
@@ -147,7 +139,7 @@ jetRock j originalRock b =
     position, or if not possible, returns Nothing -}
 dropRock :: Rock -> Board -> Maybe Rock
 dropRock originalRock b =
-  let droppedRock = moveRock down originalRock
+  let droppedRock = S.map above originalRock
   in checkBoard droppedRock b
 
 {-| Trims the board below where it may be possible to place any bricks.
@@ -158,7 +150,7 @@ dropRock originalRock b =
     if it is legal, otherwise return Nothing -}
 checkWall :: Rock -> Maybe Rock
 checkWall rock =
-  let xs = S.map (\(P x _) -> x) rock
+  let xs = S.map (\(C _ x) -> x) rock
       minX = minimum xs
       maxX = maximum xs
   in if minX >= 0 && maxX <= 6 then Just rock else Nothing
@@ -177,32 +169,27 @@ parse = let pc '<' = L ; pc '>' = R in cycle . map pc
 pb :: Board -> IO ()
 pb b =
   let mH = maxY b
-      printCoords = [P x y | y <- [mH, (mH-1)..1], x <- [0..6]]
-      coords      = chunksOf 7 . rowSorter $ printCoords
+      printCoords = [C y x | y <- [mH, (mH-1)..1], x <- [0..6]]
+      coords      = chunksOf 7 printCoords
       output      = intercalate "\n" . mkBorders $ coords
   in putStrLn $ output ++ "\n+-------+\n maxY = " ++ show mH
   where
-    mkBorders   = map ((\s -> '|':s ++ "|") . map pointChar)
-    rowSorter   = sortBy $ \(P _ y) (P _ y') -> y' `compare` y
     pointChar c = if c `S.member` b then '█' else '.'
+    mkBorders   = map ((\s -> '|':s ++ "|") . map pointChar)
 
 {-| returns the max/min @y@ of the rock pile -}
 minY, maxY :: Board -> Int
-maxY = predY (>)
-minY = predY (<)
+maxY = findYBy (>)
+minY = findYBy (<)
 
 {-| use the predicate to find an element in the list -}
-predY :: (Int -> Int -> Bool) -> Board -> Int
-predY fn = foldl' (\acc (P _ y) -> if fn y acc then y else acc) 0
-
-{-| translates a point by the x y of the other point -}
-move :: Point -> Point -> Point
-move (P x1 y1) (P x2 y2) = P (x1+x2) (y1+y2)
+findYBy :: (Int -> Int -> Bool) -> Board -> Int
+findYBy fn = foldl' (\acc (C y _) -> if fn y acc then y else acc) 0
 
 {-| moves a rock by translating all the points by the x y of 
     the point passed in the first parameter -}
-moveRock :: Point -> Rock -> Rock
-moveRock p = S.map (move p)
+moveRock :: Coord -> Rock -> Rock
+moveRock offset = S.map (+ offset)
 
 boardToMap :: Board -> [(Int, Int)]
 boardToMap board =
@@ -210,15 +197,15 @@ boardToMap board =
   where
     bitMapToInt :: [Int] -> Int
     bitMapToInt = foldl' (\acc x -> acc + 2^x) 0
-    getRow b y = S.filter (\(P _ y') -> y == y') b
-    rowToList = S.toList . S.map (\(P x _) -> x)
+    getRow b y = S.filter (\(C y' _) -> y == y') b
+    rowToList = S.toList . S.map (\(C _ x) -> x)
     row b = rowToList . getRow b
     folder acc y =
       let v = bitMapToInt (row board y)
       in (y, v):acc
 
 {-
-rTol s = S.toList . S.map (\(P x _) -> x) $ 
+rTol s = S.toList . S.map (\(C x _) -> x) $ 
 row b y = rTol . bfind b $ y
 b' = foldl' (\acc y -> row b y : acc) [] [minY b .. maxY b]
 -}
