@@ -221,18 +221,6 @@ getCycle = go M.empty 0
 height :: Set Coord -> Int
 height stuff = - cRow (minimum stuff)
 
--- | Renumber board so that it's top starts at 0
-normalize :: Board -> Board
-normalize board = moveRock (C (height board) 0) board
-
-clean :: Set Coord -> Set Coord
-clean stuff = S.filter alive stuff
-  where
-    ymin = cRow (minimum stuff)
-    step c = [n | n <- neighbors c, 0 <= cCol n, cCol n <= 6, cRow c >= ymin, S.notMember n stuff]
-    air = dfsN step [C ymin x | x <- [0..6], S.notMember (C ymin x) stuff]
-    alive x = any (`elem` air) (neighbors x) || cRow x == ymin
-
 -- let (_,board',_) = iterate placeRock (rocks, initBoard, jets) !! n
 -- states = iterate placeRock (rocks, initBoard, ij)
 slnB :: String -> Int
