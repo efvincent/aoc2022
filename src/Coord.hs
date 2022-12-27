@@ -37,7 +37,8 @@ module Coord
   , north
   , south
   , east
-  , west)
+  , west
+  , neighbors)
 where
 
 
@@ -115,6 +116,12 @@ south = C 1 0
 -- | Unit vector pointing left
 west :: Coord
 west = C 0 (-1)
+
+-- | returns the neighbors of the coordinate, not including diagonals
+neighbors :: Coord -> [Coord]
+neighbors (C y x) =
+  [ C (y+1) x, C (y-1) x
+  , C y (x+1), C y (x-1)]  
 
 {-| compute 1-norm between two coordinates (sum magnitudes).
     this is the same as the manhattan distance from the origin
