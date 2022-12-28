@@ -25,8 +25,6 @@ There are  a few changesd from the last few attempts:
     when "jetting" rocks we'll just add the jet coord to each rock coord
 -}
 {-# LANGUAGE NumericUnderscores #-}
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-{-# OPTIONS_GHC -Wno-dodgy-imports #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use underscore" #-}
 
@@ -38,15 +36,15 @@ import Data.Map (Map)
 import qualified Data.Map as M
 import Util (getPuzzle, Parts (..))
 import Coord ( Coord(..), west, east, south, neighbors, cRow, cCol )
-import Data.Array (Array(..), listArray, (!), Ix (rangeSize), bounds)
+import Data.Vector (Vector, (!))
+import qualified Data.Vector as V
 import Search (dfsN)
 
 {-- Types ----------------------------------------------------}
 
-type Rock = Set Coord
+type Rock  = Set Coord
 type Board = Set Coord
-
-type Jets = Array Int Coord
+type Jets  = Vector Coord
 
 {-| state of the board, which indexes a particular board by the index
     of the rocks (where we are in the cycle of rocks) and the index
@@ -108,20 +106,31 @@ playRock jets (rockIdx,jetIdx,board) =
   in (rockIdx', jetIdx', trim (S.union board landed))
   where
     inbounds (C _ x) = 0 <= x && x <= 6
-    rockIdx'         = succ rockIdx `mod` 5
-    start            = moveRock (rocks ! rockIdx) (C (-boardHeight board-4) 2)
-    hasLanded rock   = not (all inbounds rock && S.disjoint board rock)
+    rockIdx'         = (rockIdx + 1) `mod` 5
+    start            = moveRock (rocks ! rockIdx) (C (negate (boardHeight board) - 4) 2)
+    isValidRock rock = not (all inbounds rock && S.disjoint board rock)
 
+    {-| taking a single step means dropping a rock, applying one jet (horizontal movement)
+        per downward movement until the rock "lands" (cannot move further down).
+        
+        To do this, first we slide the rock according to the jet found at @jIdx@, then
+        we check if the @slidRock@ is valid, if not we use the rock before sliding. We then
+        take the @slidRock'@ and move it down one. If the @droppedRock@ is valid 
+        (the @droppedRock@ and the @board@ are disjoint sets), then we attempt to take
+        another step (a single horizontal slide and a single vertical drop). If not, then
+        we've bottomed out and we return the @slidRock'@ (which may or may not have actually
+        slid), and the new jet index @jIdx'@ -}
     step :: Int -> Rock -> (Rock, Int)
-    step dj p1
-      | S.disjoint board p4 = step dj' p4
-      | otherwise = (p3, dj')
+    step jIdx rock
+      | S.disjoint board droppedRock = step jIdx' droppedRock
+      | otherwise = (slidRock', jIdx')
       where
-        dj' = (dj + 1) `mod` rangeSize (bounds jets)
-        p2 = moveRock p1 (jets ! dj)
-        p3 | hasLanded p2 = p1
-           | otherwise    = p2
-        p4 = moveRock p3 south
+        slidRock    = moveRock rock (jets ! jIdx)
+        slidRock' 
+          | isValidRock slidRock = rock
+          | otherwise            = slidRock
+        droppedRock = moveRock slidRock' south
+        jIdx'       = (jIdx + 1) `mod` length jets
 
 {-| after the puzzle is complete, I typically create a test function so I can refactor
     solutions and verify that I haven't broken it -}
@@ -141,15 +150,19 @@ test17 = do
 
 parse :: String -> Jets
 parse s =
-  let pc '<' = west; pc '>' = east
+  let pc '<' = west
+      pc '>' = east
+      pc _   = error "Assertion failure: invalid input character"
       jets = map pc s
-  in listArray (0, length jets - 1) jets
+  in V.fromList jets
 
+-- | initial board is a point at all xs on the zero'th row
 initBoard :: Board
 initBoard = S.fromList [C 0 x | x <- [0..6]]
 
-rocks :: Array Int Rock
-rocks = listArray (0,4) [
+-- | rocks stored as a vector of sets of points
+rocks :: Vector Rock
+rocks = V.fromList [
     S.fromList [C 0 0,    C 0 1,    C 0 2,    C 0 3             ],
     S.fromList [C (-2) 1, C (-1) 0, C (-1) 2, C 0 1             ],
     S.fromList [C 0 0,    C 0 1,    C 0 2,    C (-1) 2, C (-2) 2],
