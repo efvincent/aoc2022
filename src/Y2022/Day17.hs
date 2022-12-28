@@ -70,11 +70,10 @@ slnA iters s = getHeightAt (iterate (playRock (parse s)) (0, 0, initBoard)) iter
     solutions, and can index the state at any particular rock by using 
     the list indexer @(!!)@. 
     
-    We call @findCycle@ over normalized boards - @normalize@ makes the top of
+    We call @findCycle@ over normalized boards - @normalize@ makes the bottom of
     the board at @y == 0@ and everything else is relative to that. This, along
-    with the @trim@ that happes during @playRock@, makes it possible to derive
-    a map index from the indexes of the rocks and jets, and the entire state
-    of the board at any step.
+    with the @trim@ that happes during @playRock@, makes it possible to compare
+    different states and look for cycles with @findCycle@.
 
     Once we know where (in terms of rock index) the cycle starts and ends, 
     we can basically calculate how many complete cycles it would take to reach a 
@@ -102,38 +101,35 @@ playRock
   -> GameState
   -> GameState
 playRock jets (rockIdx,jetIdx,board) =
-  let (landed, jetIdx') = step jetIdx start
-  in (rockIdx', jetIdx', trim (S.union board landed))
+  let (landedRock, jetIdx') = step jetIdx rock
+  in (rockIdx', jetIdx', trim (S.union board landedRock))
   where
     inbounds (C _ x) = 0 <= x && x <= 6
     rockIdx'         = (rockIdx + 1) `mod` 5
-    start            = moveRock (rocks ! rockIdx) (C (negate (boardHeight board) - 4) 2)
-    isValidRock rock = not (all inbounds rock && S.disjoint board rock)
+    rock             = moveRock (rocks ! rockIdx) (C (negate (boardHeight board) - 4) 2)
+    inValidRock r    = not (all inbounds r && S.disjoint board r)
 
     {-| taking a single step means dropping a rock, applying one jet (horizontal movement)
         per downward movement until the rock "lands" (cannot move further down).
         
         To do this, first we slide the rock according to the jet found at @jIdx@, then
         we check if the @slidRock@ is valid, if not we use the rock before sliding. We then
-        take the @slidRock'@ and move it down one. If the @droppedRock@ is valid 
-        (the @droppedRock@ and the @board@ are disjoint sets), then we attempt to take
-        another step (a single horizontal slide and a single vertical drop). If not, then
-        we've bottomed out and we return the @slidRock'@ (which may or may not have actually
-        slid), and the new jet index @jIdx'@ -}
+        take the @slidRock'@ and move it down one, and if that's valid we take another step
+        to continue dropping the rock. If the rock has landed, we return the landed rock
+        and the current jet index -}
     step :: Int -> Rock -> (Rock, Int)
-    step jIdx rock
+    step jIdx startingRock
       | S.disjoint board droppedRock = step jIdx' droppedRock
       | otherwise = (slidRock', jIdx')
       where
-        slidRock    = moveRock rock (jets ! jIdx)
+        slidRock = moveRock startingRock (jets ! jIdx)
         slidRock' 
-          | isValidRock slidRock = rock
+          | inValidRock slidRock = startingRock
           | otherwise            = slidRock
         droppedRock = moveRock slidRock' south
         jIdx'       = (jIdx + 1) `mod` length jets
 
-{-| after the puzzle is complete, I typically create a test function so I can refactor
-    solutions and verify that I haven't broken it -}
+-- | After solving, A test function to verivy refactorings 
 test17 :: IO ()
 test17 = do
   s <- getPuzzle 17
@@ -171,10 +167,6 @@ rocks = V.fromList [
 
 {-- Helpers----------------------------------------------------}
 
--- | Renumber a tower so that it's top starts at 0
-normalize :: Board -> Board
-normalize board = moveRock board (C (boardHeight board) 0)
-
 {-| Finds a repeating cycle and returns the starting and ending rock counts
     (the number of rocks dropped to produce a state) for where the cycle 
     starts and ends.
@@ -201,9 +193,15 @@ getHeightAt states rockNum  =
   let (_,_,board) = states !! rockNum
   in boardHeight board
 
--- | height of the board
+{-| height of the board, which is the smalles row, negated because we've adjusted
+    the bottom of the board to be at @y == 0@, and it grows "up" into the negative
+    @y@ values -}
 boardHeight :: Board -> Int
 boardHeight b = negate . cRow $ minimum b
+
+-- | Renumber a tower so that it's bottom row is at @y == 0@
+normalize :: Board -> Board
+normalize board = moveRock board (C (boardHeight board) 0)
 
 -- | moves a rock (set of Coord) by the vector second parameter
 moveRock :: Rock -> Coord -> Rock
