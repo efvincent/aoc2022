@@ -17,6 +17,7 @@ executable aoc2022.exe
       Coord3
       Fifo
       Grid
+      Queue
       Search
       Util
       Y2015.Day01

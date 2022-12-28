@@ -1,242 +1,206 @@
-{-# OPTIONS_GHC -Wno-unused-imports #-}
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-|
+Module      : Day17
+Description : Advent of Code Day 17
+Copyright   : (c) Eric Vincent, 2022
+License     : ISC
+Maintainer  : info at efvincent dot com
+Stability   : experimental
+
+This is the 3rd major rewrite of Day 17. Original approached worked
+for part A, but the shortcuts and hackery got me in trouble for part B.
+There are  a few changesd from the last few attempts:
+
+  - using a better developed @Coord@ module (I also have a @Coord3@ for 3d)
+  - also using a dedicated search module with breadth  & depth first search 
+  - using the lazy @iterate@ which will generate a list of results
+  - the top will start at zero instead of the bottom being zero
+  - attempting some optimization with arrays
+    - we'll use indexing instead of induction over cycled/infinite lists
+  - because we're chainging to Coord with row-major indexing, the initial
+    position of coords in rocks is in C y x order. 
+  - also since we're starting with zero at the top, we put the rocks just
+    outside (negative y) as initial position which is changed when the
+    rock comes into play
+  - storing the "jets" as a Coord each for left (@west@) and right (@east@),
+    when "jetting" rocks we'll just add the jet coord to each rock coord
+-}
 {-# LANGUAGE NumericUnderscores #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# OPTIONS_GHC -Wno-dodgy-imports #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use underscore" #-}
-module Y2022.Day17 where
+
+module Y2022.Day17 (sln17, test17) where
 
 import Data.Set (Set)
-import Data.Map.Strict (Map)
 import qualified Data.Set as S
-import qualified Data.Map.Strict as M
-import Util (getSample, getPuzzle, uncurry3)
-import Data.Foldable (foldl')
-import Data.Maybe (fromMaybe)
-import Data.List (sortBy, intercalate)
-import Data.List.Split (chunksOf)
-import Coord (Coord(..), left, right, above, cX, cY, cRow, neighbors, cCol)
+import Data.Map (Map)
+import qualified Data.Map as M
+import Util (getPuzzle, Parts (..))
+import Coord ( Coord(..), west, east, south, neighbors, cRow, cCol )
+import Data.Array (Array(..), listArray, (!), Ix (rangeSize), bounds)
 import Search (dfsN)
 
-samp :: IO String
-samp = getSample 17
-puzz :: IO String
-puzz = getPuzzle 17
-
-ij :: [Jet]
-ij = parse ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
-
-{-
-    - board is 7 units wide
-    - each rock begins so that:
-      - its left edge 2 units from the left wall
-      - its bottom edge is 3 units above the highest 
-        rock in the wall (or the floor when there are no rocks)
-    - pieces:
-
-
-    0 1 2 3  
-    -------
-    # # # # | 0         (0,0), (0,1), (0,2), (0,3)
-
-    0 1 2
-    -----
-      #   | 2           (2,1), (1,0), (1,1), (1,2), (0,1)
-    # # # | 1
-      #   | 0
-
-    0 1 2
-    -----
-        # | 2           (2,2), (1,2), (0,0), (0,1), (0,2)
-        # | 1
-    # # # | 0
-
-    0
-    -
-    # | 3               (3,0), (2,0), (1,0), (0,0)
-    # | 2
-    # | 1
-    # | 0
-
-    0 1
-    ---
-    # # | 1             (0,1), (1,1), (0,0), (1,0)
-    # # | 0
-
--}
-
-{-- Types & Consts-------------------------------------------------}
-
-data Jet = L | R deriving (Show, Eq)
+{-- Types ----------------------------------------------------}
 
 type Rock = Set Coord
-
 type Board = Set Coord
+
+type Jets = Array Int Coord
+
+{-| state of the board, which indexes a particular board by the index
+    of the rocks (where we are in the cycle of rocks) and the index
+    of jets (where we are in the cycle of jets) -}
+type GameState =
+  ( Int         -- ^ rock index
+  , Int         -- ^ jet index
+  , Set Coord)  -- ^ board
+
+{-- Solutions & Tests-----------------------------------------}
+
+-- | fits into the @Util.solve@ function
+sln17 :: Parts -> String -> Int
+sln17 PartA = slnA 2022
+sln17 PartB = slnB
+
+{-| part A is just playing 2022 rocks, then see how high the pile is -}
+slnA :: Int -> String -> Int
+slnA iters s = getHeightAt (iterate (playRock (parse s)) (0, 0, initBoard)) iters
+
+{-| part B took me a long time and drove 2 compete rewrites of Day 17. 
+    remembering that @iterate@ is lazy, we create an infinite list of
+    solutions, and can index the state at any particular rock by using 
+    the list indexer @(!!)@. 
+    
+    We call @findCycle@ over normalized boards - @normalize@ makes the top of
+    the board at @y == 0@ and everything else is relative to that. This, along
+    with the @trim@ that happes during @playRock@, makes it possible to derive
+    a map index from the indexes of the rocks and jets, and the entire state
+    of the board at any step.
+
+    Once we know where (in terms of rock index) the cycle starts and ends, 
+    we can basically calculate how many complete cycles it would take to reach a 
+    trillion rocks being dropped, accounting for the fact that the game doesn't
+    start right at the start of a cycle, it starts somewhere in the middle of
+    a cycle, so we have to account for the remainder. -}
+slnB :: String -> Int
+slnB s =
+  let jets          = parse s
+      height        = getHeightAt states
+      states        = iterate (playRock jets) (0, 0, initBoard)
+      (cStart,cEnd) = findCycle [(rockIdx,jetIdx,normalize board) | (rockIdx,jetIdx,board) <- states]
+      cLen          = cEnd - cStart
+      cCount        = (1_000_000_000_000 - cStart) `div` cLen
+      cRemainder    = (1_000_000_000_000 - cStart) `mod` cLen
+      cHeight       = height cEnd - height cStart
+  in (height (cEnd + cRemainder) + cHeight * (cCount - 1))
+
+
+{-| Primary driving function, advances game state by one rock. Note that it
+    also calls @trim@ to trim off rows that cannot be reached. Without
+    this optimization, part B runs out of memory before it can complete. -}
+playRock
+  :: Jets
+  -> GameState
+  -> GameState
+playRock jets (rockIdx,jetIdx,board) =
+  let (landed, jetIdx') = step jetIdx start
+  in (rockIdx', jetIdx', trim (S.union board landed))
+  where
+    inbounds (C _ x) = 0 <= x && x <= 6
+    rockIdx'         = succ rockIdx `mod` 5
+    start            = moveRock (rocks ! rockIdx) (C (-boardHeight board-4) 2)
+    hasLanded rock   = not (all inbounds rock && S.disjoint board rock)
+
+    step :: Int -> Rock -> (Rock, Int)
+    step dj p1
+      | S.disjoint board p4 = step dj' p4
+      | otherwise = (p3, dj')
+      where
+        dj' = (dj + 1) `mod` rangeSize (bounds jets)
+        p2 = moveRock p1 (jets ! dj)
+        p3 | hasLanded p2 = p1
+           | otherwise    = p2
+        p4 = moveRock p3 south
+
+{-| after the puzzle is complete, I typically create a test function so I can refactor
+    solutions and verify that I haven't broken it -}
+test17 :: IO ()
+test17 = do
+  s <- getPuzzle 17
+  let sa = slnA 2022 s
+      sb = slnB s
+  if sa == 3186
+  then putStrLn   "Part A - PASS"
+  else putStrLn $ "Part A - FAIL ... expected 3186, got " ++ show sa
+  if sb == 1566376811584
+  then putStrLn   "Part B - PASS"
+  else putStrLn $ "Part B - FAIL ... expected 1566376811584, got " ++ show sb
+
+{-- Parsing and Initialization------------------------------}
+
+parse :: String -> Jets
+parse s =
+  let pc '<' = west; pc '>' = east
+      jets = map pc s
+  in listArray (0, length jets - 1) jets
 
 initBoard :: Board
 initBoard = S.fromList [C 0 x | x <- [0..6]]
 
-rocks :: [Rock]
-rocks = map (moveRock (C 0 2))
-  [ S.fromList [C 0 0, C 0 1, C 0 2, C 0 3]
-  , S.fromList [C 2 1, C 1 0, C 1 1, C 1 2, C 0 1]
-  , S.fromList [C 2 2, C 1 2, C 0 0, C 0 1, C 0 2]
-  , S.fromList [C 3 0, C 2 0, C 1 0, C 0 0]
-  , S.fromList [C 0 1, C 1 1, C 0 0, C 1 0]]
+rocks :: Array Int Rock
+rocks = listArray (0,4) [
+    S.fromList [C 0 0,    C 0 1,    C 0 2,    C 0 3             ],
+    S.fromList [C (-2) 1, C (-1) 0, C (-1) 2, C 0 1             ],
+    S.fromList [C 0 0,    C 0 1,    C 0 2,    C (-1) 2, C (-2) 2],
+    S.fromList [C 0 0,    C (-1) 0, C (-2) 0, C (-3) 0          ],
+    S.fromList [C (-1) 0, C (-1) 1, C 0 0,    C 0 1             ]]
 
-{-- Solutions----------------------------------------------------}
+{-- Helpers----------------------------------------------------}
 
-testA :: IO ()
-testA = do
-  s <- getPuzzle 17
-  let ans = sln17A s
-      msg =
-        if ans == 3186 then "PASS"
-        else "FAIL : Expecting 3186, got " ++ show ans
-  putStrLn msg
+-- | Renumber a tower so that it's top starts at 0
+normalize :: Board -> Board
+normalize board = moveRock board (C (boardHeight board) 0)
 
-sln17A :: String -> Int
-sln17A = maxY . slnA 2022 . parse
-
-{-| calls @placeRock@ iteratively @n@ times and returns the state
-    of the board with rocks placed-}
-slnA :: Int -> [Jet] -> Board
-slnA n jets =
-  let (_,_,board',_) = iterate placeRock ((0,0), cycle rocks, initBoard, cycle jets) !! n
-  in board'
-
-{-| pops the next rock off the stack, places it 3 units above the 
-    top of the rock pile, then applies jets and drops until it 
-    settles by calling @jetAndDrop@ -}
-placeRock :: ((Int,Int), [Rock],Board, [Jet]) -> ((Int,Int), [Rock],Board,[Jet])
-placeRock ((ri,ji), rh:rt, board, jets) =
-  let startingRock = moveRock (C (maxY board + 4) 0) rh   -- move the rock to 3 above top of puzzle
-      (ji', boards', jets') = jetAndDrop ji startingRock board jets
-  in ((ri+1, ji'), rt, boards', jets')
-
-{-| applies a jet (within constraints) then a drop (again within
-    constraints) and returns the new state of the board, and the
-    remaining "jets" -}
-jetAndDrop :: Int -> Rock -> Board -> [Jet] -> (Int, Board, [Jet])
-jetAndDrop jetIdx origRock board (jh:jt) =
-  let slid = jetRock jh origRock board
-  in case dropRock slid board of
-    Just droppedRock -> jetAndDrop (jetIdx+1) droppedRock board jt
-    Nothing ->
-      (jetIdx + 1, slid `S.union` board, jt)
-
-{-- Helpers -----------------------------------------------------}
-
-{-| jets a rock left or right and return the rock's new position,
-    which may not have changed if there was something in the way
-    or if the rock went out of bounds -}
-jetRock :: Jet -> Rock -> Board -> Rock
-jetRock j originalRock b =
-  let movement     = if j == L then left else right
-      slid         = S.map movement originalRock
-      inBoundsRock = fromMaybe originalRock (checkWall slid)
-      okRock       = fromMaybe originalRock (checkBoard inBoundsRock b)
-  in okRock
-
-{-| drops a rock down one and returns Just the rock at the new
-    position, or if not possible, returns Nothing -}
-dropRock :: Rock -> Board -> Maybe Rock
-dropRock originalRock b =
-  let droppedRock = S.map above originalRock
-  in checkBoard droppedRock b
- 
-{-| Trims the board below where it may be possible to place any bricks.
-    this is probably not the most effective way to do this, as I'm 
-    breaking only on solid lines. -}
-
-{-| Check if a rock is out of bounds wrt the walls. Return the rock
-    if it is legal, otherwise return Nothing -}
-checkWall :: Rock -> Maybe Rock
-checkWall rock =
-  let xs = S.map (\(C _ x) -> x) rock
-      minX = minimum xs
-      maxX = maximum xs
-  in if minX >= 0 && maxX <= 6 then Just rock else Nothing
-
-{-| Check if a rock is in conflict with the rock pile. Return the
-    rock if it is legal, otherwise return Nothing -}
-checkBoard :: Rock -> Board -> Maybe Rock
-checkBoard rock b = if S.disjoint rock b then Just rock else Nothing
-
-{-| produces an infinite array of jets -}
-parse :: String -> [Jet]
-parse = let pc '<' = L ; pc '>' = R in map pc
-
-{-| prints the board to stdio in ascii as presented in AoC -}
-pb :: Board -> IO ()
-pb b =
-  let mH = maxY b
-      printCoords = [C y x | y <- [mH, (mH-1)..1], x <- [0..6]]
-      coords      = chunksOf 7 printCoords
-      output      = intercalate "\n" . mkBorders $ coords
-  in putStrLn $ output ++ "\n+-------+\n maxY = " ++ show mH
+{-| Finds a repeating cycle and returns the starting and ending rock counts
+    (the number of rocks dropped to produce a state) for where the cycle 
+    starts and ends.
+    
+    It does this by looping through all the states, writing the starting
+    rock index into a map keyed by the (hash of) the game state itself, which
+    includes the rock index, jet index, and the entire board (set of coords). 
+    If it finds the same hash, then it returns the start and end rock indexes,
+    which are effectively which rock produced the start of the cycle, and which
+    rock ended the cycle.  -}
+findCycle :: [GameState] -> (Int,Int)
+findCycle = go M.empty 0
   where
-    pointChar c = if c `S.member` b then '█' else '.'
-    mkBorders   = map ((\s -> '|':s ++ "|") . map pointChar)
-
-{-| returns the max/min @y@ of the rock pile -}
-minY, maxY :: Board -> Int
-maxY = findYBy (>)
-minY = findYBy (<)
-
-{-| use the predicate to find an element in the list -}
-findYBy :: (Int -> Int -> Bool) -> Board -> Int
-findYBy fn = foldl' (\acc (C y _) -> if fn y acc then y else acc) 0
-
-{-| moves a rock by translating all the points by the x y of 
-    the point passed in the first parameter -}
-moveRock :: Coord -> Rock -> Rock
-moveRock offset = S.map (+ offset)
-
-{-| returns the board, not including the "ground" level, represented
-    as a list of tuples where fst is the row index, and snd is the
-    value of the coords in that row where each position is a bit in
-    a 7-bit bitmap, such that each row has a value of 0-127 -}
-boardToBitmaps :: Board -> [(Int, Int)]
-boardToBitmaps board =
-  tail . reverse . foldl' folder [] $ [minY board .. maxY board]
-  where
-    bitMapToInt :: [Int] -> Int
-    bitMapToInt = foldl' (\acc x -> acc + 2^x) 0
-    getRow b y = S.filter ((== y) . cY) b
-    row b = S.toList . S.map cX . getRow b
-    folder acc y =
-      let v = bitMapToInt (row board y)
-      in (y, v):acc
-
-getCycle :: Ord a => [a] -> (Int,Int)
-getCycle = go M.empty 0
-  where
+    go :: Map GameState Int -> Int -> [GameState] -> (Int,Int)
     go _ _ [] = error "no cycle"
-    go seen i (x:xs) =
-      case M.lookup x seen of
-        Nothing -> go (M.insert x i seen) (i+1) xs
-        Just j -> (j,i)
+    go seen endRockIdx (state:states) =
+      case M.lookup state seen of
+        Nothing           -> go (M.insert state endRockIdx seen) (endRockIdx + 1) states
+        Just startRockIdx -> (startRockIdx, endRockIdx)
 
--- | Height of a board
-height :: Set Coord -> Int
-height stuff = - cRow (minimum stuff)
+-- | Given the game states, determine the height at a particular rock number
+getHeightAt :: [GameState] -> Int -> Int
+getHeightAt states rockNum  =
+  let (_,_,board) = states !! rockNum
+  in boardHeight board
 
--- let (_,board',_) = iterate placeRock (rocks, initBoard, jets) !! n
--- states = iterate placeRock (rocks, initBoard, ij)
-slnB :: String -> Int
-slnB s =
-  let jets = cycle . parse $ s
-      states = iterate placeRock ((0,0), cycle rocks, initBoard, jets)
-      heightOf i = case states !! i of (_,_,b,_) -> cRow (maximum b)
-      (cStart, cEnd) = getCycle [(i,j, board) | ((i,j), _, board, _) <- states]
+-- | height of the board
+boardHeight :: Board -> Int
+boardHeight b = negate . cRow $ minimum b
 
-      cycLen =  cEnd - cStart
-      (cycCnt, overflow) = (1_000_000_000_000 - cStart) `divMod` cycLen
-      cycHeight = heightOf cEnd - heightOf cStart
-  in (heightOf (cEnd + overflow) + cycHeight * (cycCnt - 1))
+-- | moves a rock (set of Coord) by the vector second parameter
+moveRock :: Rock -> Coord -> Rock
+moveRock rock m = S.mapMonotonic (m +) rock
 
-
-{-
-rTol s = S.toList . S.map (\(C _ x) -> x) $ 
-row b y = rTol . bfind b $ y
-b' = foldl' (\acc y -> row b y : acc) [] [minY b .. maxY b] -}
+-- | trims the layers of board that are no longer reachable (optimization)
+trim :: Board -> Board
+trim board = S.filter live board
+  where
+    mny      = cRow (minimum board)
+    step c   = [n | n <- neighbors c, 0 <= cCol n, cCol n <= 6, cRow c >= mny, S.notMember n board]
+    air      = dfsN step [C mny x | x <- [0..6], S.notMember (C mny x) board]
+    live b   = any (`elem` air) (neighbors b) || cRow b == mny
