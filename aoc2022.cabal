@@ -17,6 +17,7 @@ executable aoc2022.exe
       Coord3
       Fifo
       Grid
+      Queue
       Search
       Util
       Y2015.Day01
@@ -37,6 +38,7 @@ executable aoc2022.exe
       Y2022.Day14
       Y2022.Day15
       Y2022.Day16
+      Y2022.Day17
       Y2022.Day18
       Paths_aoc2022
   hs-source-dirs:

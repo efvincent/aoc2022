@@ -11,6 +11,9 @@ module Util
   , pairs
   , signOf
   , remove
+  , uncurry3
+  , findCycle
+  , findCycleBy
   , Parts (..)
   ) where
 import System.Environment (getEnv)
@@ -26,6 +29,33 @@ data InputType = Sample | Puzzle deriving (Eq, Ord, Show)
 year :: Int
 year = 22 
 
+{-| find the cycle in a list -}
+findCycle :: Eq a => [a] -> ([a], [a])
+findCycle = findCycleBy (==)
+
+{-| find the cycle in a list -}
+findCycleBy :: (a -> a -> Bool) -> [a] -> ([a], [a])
+findCycleBy compFn xxs = fCycle xxs xxs
+  where
+    fCycle (x:xs) (_:y:ys)
+      | x `compFn` y = fStart xxs xs
+      | otherwise = fCycle xs ys
+    fCycle _ _ = (xxs, [])        -- not cyclic
+    fStart (x:xs) (y:ys)
+      | x `compFn` y = ([], x:fLength x xs)
+      | otherwise = let (as,bs) = fStart xs ys in (x:as,bs)
+    fStart _ _ = error "Assertion failed - impossible condition"
+    fLength x (y:ys)
+      | x `compFn` y = []
+      | otherwise = y:fLength x ys
+    fLength _ _ = error "Assertion failed - impossible condition"
+
+
+{-| same as uncurry, except for functions of 3 arguments -}
+uncurry3 :: (a -> b -> c -> d) -> (a,b,c) -> d
+uncurry3 f (a,b,c) = f a b c
+
+{-| returns @x@ negated if @n@ is negative, unchanged if positive -}
 signOf :: Int -> Int -> Int
 signOf x n | n < 0     = x * (-1)
            | otherwise = x
@@ -72,7 +102,6 @@ tup2 _ = error "must be at least 2 values in the list"
 tup3 :: [a] -> (a,a,a)
 tup3 (x:y:z:_) = (x,y,z)
 tup3 _ = error "must be at least 3 values in the list"
-
 
 {-| Finds the intersection between multiple lists -}
 intersect :: Eq a => [[a]] -> [a]

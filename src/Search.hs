@@ -15,10 +15,18 @@ module Search
   ( dfs
   , dfsN
   , dfsOn
-  , dfsOnN)
+  , dfsOnN
+  , bfs
+  , bfsN
+  , bfsOn
+  , bfsOnN)
 where
 
 import qualified Data.Set as S
+import qualified Queue as Q
+import Queue (Queue ((:<|)))
+
+{-- Depth First Search ----------------------------------------------------}
 
 -- | depth first search, first pattern is the next state function, second
 --   is the starting state. The search is found when there's no next state.
@@ -76,4 +84,32 @@ dfsOnN
               r = rep x
               seen' = S.insert r seen
 
+{-- Breadth First Search --------------------------------------------------}
 
+bfs :: Ord a => (a -> [a]) -> a -> [a]
+bfs = bfsOn id
+
+bfsN :: Ord a => (a -> [a]) -> [a] -> [a]
+bfsN = bfsOnN id
+
+bfsOn :: Ord r => (a -> r) -> (a -> [a]) -> a -> [a]
+bfsOn rep next start = bfsOnN rep next [start]
+
+bfsOnN :: Ord r => (a -> r) -> (a -> [a]) -> [a] -> [a]
+bfsOnN rep next start =
+  loop S.empty (Q.fromList start)
+  where
+    loop !seen = \case
+      Q.Empty -> []
+      x :<| q
+        | S.member r seen -> loop seen q
+        | otherwise -> x : loop seen' q'
+        where
+          r = rep x
+          seen' = S.insert r seen
+          q' = Q.appendList q (next x)
+
+{-# INLINE bfs #-}
+{-# INLINE bfsN #-}
+{-# INLINE [0] bfsOn #-}
+{-# INLINE [0] bfsOnN #-}
