@@ -34,11 +34,11 @@ import Data.Set (Set)
 import qualified Data.Set as S
 import Data.Map (Map)
 import qualified Data.Map as M
-import Util (getPuzzle, Parts (..))
-import Coord ( Coord(..), west, east, south, neighbors, cRow, cCol )
 import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
 import Search (dfsN)
+import Util (getPuzzle, Parts (..))
+import Coord ( Coord(..), west, east, south, neighbors, cRow, cCol )
 
 {-- Types ----------------------------------------------------}
 
