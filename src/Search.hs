@@ -26,6 +26,7 @@ module Search
   , aStarOnN)
 where
 
+import qualified Data.IntSet as IS
 import qualified Data.Set as S
 import qualified Queue as Q
 import Queue (Queue ((:<|)))
@@ -109,16 +110,33 @@ bfsOnN rep next start =
       Q.Empty -> []
       x :<| q
         | S.member r seen -> loop seen q
-        | otherwise -> x : loop seen' q'
+        | otherwise       -> x : loop seen' q'
         where
-          r = rep x
+          r     = rep x
           seen' = S.insert r seen
-          q' = Q.appendList q (next x)
+          q'    = Q.appendList q (next x)
 
 {-# INLINE bfs #-}
 {-# INLINE bfsN #-}
 {-# INLINE [0] bfsOn #-}
 {-# INLINE [0] bfsOnN #-}
+
+-- | specialization for @Int@ search
+{-# INLINE bfsOnInt #-}
+{-# RULES "bfsOn/Int" bfsOn = bfsOnInt #-}
+bfsOnInt :: (a -> Int) -> (a -> [a]) -> a -> [a]
+bfsOnInt rep next start = 
+  loop IS.empty (Q.singleton start)
+  where
+    loop !seen = \case
+      Q.Empty -> []
+      x Q.:<| q
+        | IS.member r seen -> loop seen q
+        | otherwise        -> x : loop seen' q'
+        where
+          r     = rep x
+          seen' = IS.insert r seen
+          q'    = Q.appendList  q (next x) 
 
 {-- A* Search ---------------------------------------------------------}
 
