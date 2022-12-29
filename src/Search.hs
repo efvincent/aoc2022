@@ -19,12 +19,18 @@ module Search
   , bfs
   , bfsN
   , bfsOn
-  , bfsOnN)
+  , bfsOnN
+  , aStar
+  , aStarN
+  , aStarOn
+  , aStarOnN)
 where
 
 import qualified Data.Set as S
 import qualified Queue as Q
 import Queue (Queue ((:<|)))
+import qualified PQueue as PQ
+import Data.Foldable (foldl')
 
 {-- Depth First Search ----------------------------------------------------}
 
@@ -113,3 +119,60 @@ bfsOnN rep next start =
 {-# INLINE bfsN #-}
 {-# INLINE [0] bfsOn #-}
 {-# INLINE [0] bfsOnN #-}
+
+{-- A* Search ---------------------------------------------------------}
+
+data AStep a = AStep
+  { astepNext :: a
+  , astepCost :: !Int
+  , astepHeuristic :: !Int } deriving Show
+
+-- | Helper type to unpack the cost value in the A* priority queue
+data WithCost a = WC !Int a
+
+-- | Shortcut for @aStarOn id@
+aStar :: Ord a => (a -> [AStep a]) -> a -> [(a,Int)]
+aStar = aStarOn id
+
+-- | Shortcut for @aStarOnN id@
+aStarN :: Ord a => (a -> [AStep a]) -> [a] -> [(a,Int)]
+aStarN = aStarOnN id
+
+{-| A* graph search producing a list of reached states and the minimum
+    cost of reaching that state.
+
+    Returned states will be unique up to the characterization function. 
+    This allows extra information of a node to be ignored for the purposes
+    of search. For example, a node might remember the path used to reach it 
+    while for the search the particular path taken might not matter
+-}
+aStarOn
+  :: Ord b =>
+  (a -> b) ->         {-^ state characterization function -}
+  (a -> [AStep a]) -> {-^ step function (new state, step cost, distance heuristic -}
+  a ->                {-^ starting state -}
+  [(a,Int)]           {-^ list of states visited -}
+aStarOn rep nexts start = aStarOnN rep nexts [start]
+
+-- | generalization of @aStarOn@ that accepts multiple starting states
+aStarOnN 
+  :: Ord b => 
+  (a -> b) ->         {-^ state characterization function -}
+  (a -> [AStep a]) -> {-^ step function (new state, step cost, distance heuristic -}
+  [a] ->              {-^ starting states -}
+  [(a,Int)]           {-^ list of states visited -}
+aStarOnN rep nexts starts =
+  go S.empty (PQ.fromList [(0, WC 0 s) | s <- starts])
+  where
+    go !seen = \case
+      PQ.Empty -> []
+      WC cost x PQ.:<| work
+        | S.member r seen -> go seen work
+        | otherwise       -> (x,cost) : go seen' work'
+        where
+          r = rep x
+          seen' = S.insert r seen
+          work' = foldl' addWork work (nexts x)
+          addWork w (AStep x' stepcost heuristic) =
+            PQ.insert (cost' + heuristic) (WC cost' x') w
+            where cost' = cost + stepcost
