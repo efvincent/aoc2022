@@ -11,6 +11,7 @@ module Util
   , pairs
   , signOf
   , remove
+  , replaceAt
   , uncurry3
   , findCycle
   , findCycleBy
@@ -63,6 +64,13 @@ signOf x n | n < 0     = x * (-1)
 {-| Removes an element from a list -}
 remove :: Eq a => a -> [a] -> [a]
 remove a = filter (/= a)
+
+{-| Replace an element of a list by index -}
+replaceAt :: Int -> a -> [a] -> [a]
+replaceAt _ _ []  = []
+replaceAt n v (x:xs)
+  | n == 0 = v:xs
+  | otherwise = x:replaceAt (n-1) v xs
 
 {-| pairs elements of a list by twos. 
     Ex: [1,2,3,4] -> [(1,2),(2,3),(3,4)] -}
