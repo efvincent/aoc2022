@@ -1,9 +1,9 @@
 module Y2022.Day12 (sln12) where
 
-import Grid (Grid, grid, nbors4, assocs, (!))
+import Grid (Grid, grid, nbors4)
 import qualified Data.List as List
 import Algorithm.Search (aStar, bfs)
-import GHC.Arr ((//))
+import GHC.Arr ((//), assocs, (!))
 import Util (Parts (..))
 
 type Hill  = Grid Char
