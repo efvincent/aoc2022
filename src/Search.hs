@@ -26,6 +26,7 @@ module Search
   , aStarOnN)
 where
 
+import qualified Data.IntSet as IS
 import qualified Data.Set as S
 import qualified Queue as Q
 import Queue (Queue ((:<|)))
@@ -92,15 +93,24 @@ dfsOnN
 
 {-- Breadth First Search --------------------------------------------------}
 
+-- | Shortcut for @'bfsOn' 'id'@
 bfs :: Ord a => (a -> [a]) -> a -> [a]
 bfs = bfsOn id
 
+-- | Shortcut for @'bfsOnN' 'id'@
 bfsN :: Ord a => (a -> [a]) -> [a] -> [a]
 bfsN = bfsOnN id
 
+{-| Enumerate the reachable states in breadth-first order
+    given a successor state function and initial state.
+
+    States are compared for equality using the representative
+    function. If the representatives are equal the state is
+    considered already visited. -}
 bfsOn :: Ord r => (a -> r) -> (a -> [a]) -> a -> [a]
 bfsOn rep next start = bfsOnN rep next [start]
 
+{-| Generalization of @bfsOn@ allowing multiple initial states -}
 bfsOnN :: Ord r => (a -> r) -> (a -> [a]) -> [a] -> [a]
 bfsOnN rep next start =
   loop S.empty (Q.fromList start)
@@ -109,19 +119,40 @@ bfsOnN rep next start =
       Q.Empty -> []
       x :<| q
         | S.member r seen -> loop seen q
-        | otherwise -> x : loop seen' q'
+        | otherwise       -> x : loop seen' q'
         where
-          r = rep x
+          r     = rep x
           seen' = S.insert r seen
-          q' = Q.appendList q (next x)
+          q'    = Q.appendList q (next x)
 
 {-# INLINE bfs #-}
 {-# INLINE bfsN #-}
 {-# INLINE [0] bfsOn #-}
 {-# INLINE [0] bfsOnN #-}
 
+-- | specialization for @Int@ search
+{-# INLINE bfsOnInt #-}
+{-# RULES "bfsOn/Int" bfsOn = bfsOnInt #-}
+bfsOnInt :: (a -> Int) -> (a -> [a]) -> a -> [a]
+bfsOnInt rep next start = 
+  loop IS.empty (Q.singleton start)
+  where
+    loop !seen = \case
+      Q.Empty -> []
+      x Q.:<| q
+        | IS.member r seen -> loop seen q
+        | otherwise        -> x : loop seen' q'
+        where
+          r     = rep x
+          seen' = IS.insert r seen
+          q'    = Q.appendList  q (next x) 
+
 {-- A* Search ---------------------------------------------------------}
 
+{-| A step in the A* graph search annotated with its cost and an
+    estimate of the distance remaining to the goal. The estimate
+    must be an underapproximation to ensure the search finds the
+    optimal solution -}
 data AStep a = AStep
   { astepNext :: a
   , astepCost :: !Int
