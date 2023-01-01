@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric, DeriveDataTypeable #-}
 {-|
 Module      : Coord
 Description : 2D Coordinate library for Advent of Code use
@@ -16,7 +17,6 @@ row-major coordinate indexing which is normal when using
 array (or vector) storage
 
 -}
-{-# LANGUAGE DeriveGeneric, DeriveDataTypeable #-}
 module Coord 
   ( Coord (..)
   , cRow

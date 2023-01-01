@@ -5,25 +5,19 @@ module Grid
   , toList
   , nbors4
   , nbors8
-  , module A)
+  )
 where
 
-import Data.Array as A
+import qualified Data.Array as A
   ( Ix(..)
   , Array
   , (!)
-  , accum
-  , accumArray
   , array
-  , assocs
   , bounds
-  , elems
-  , indices
-  , ixmap
-  , listArray)
+  )
 import Data.Bifunctor (first)
 
-type Grid a = Array (Int,Int) a
+type Grid a = A.Array (Int,Int) a
 
 grid :: [[a]] -> Grid a
 grid g = A.array (boundGrid g) $ indexGrid g
