@@ -28,7 +28,7 @@ data InputType = Sample | Puzzle deriving (Eq, Ord, Show)
 -- that in a reader monad and thread it through the relevant 
 -- functions
 year :: Int
-year = 22 
+year = 23 
 
 {-| find the cycle in a list -}
 findCycle :: Eq a => [a] -> ([a], [a])
