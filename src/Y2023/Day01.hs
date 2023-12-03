@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-type-defaults #-}
-module Y2023.Day01 (sln) where
+module Y2023.Day01 (sln2301) where
 
 import Data.Char (isNumber)
 import Data.Bifunctor (first)
@@ -12,8 +12,8 @@ digits =
 stigid :: [(String, Int)]
 stigid = map (first reverse) digits
 
-sln :: String -> (Int,Int)
-sln s = (sln01A s, sln01B s)
+sln2301 :: String -> (Int,Int)
+sln2301 s = (sln01A s, sln01B s)
 
 sln01A :: String -> Int
 sln01A  =
