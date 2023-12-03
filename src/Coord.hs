@@ -38,7 +38,9 @@ module Coord
   , south
   , east
   , west
-  , neighbors)
+  , neighbors
+  , diags
+  , allNeighbors)
 where
 
 
@@ -122,6 +124,16 @@ neighbors :: Coord -> [Coord]
 neighbors (C y x) =
   [ C (y+1) x, C (y-1) x
   , C y (x+1), C y (x-1)]  
+
+-- | returns the diagonals of the coordinate
+diags :: Coord -> [Coord]
+diags (C y x) =
+  [ C (y+1) (x+1), C (y-1) (x-1)
+  , C (y-1) (x+1), C (y+1) (x-1)]  
+
+-- | returns the neighbors of the coordinate, including diagonals
+allNeighbors :: Coord -> [Coord]
+allNeighbors c = neighbors c ++ diags c
 
 {-| compute 1-norm between two coordinates (sum magnitudes).
     this is the same as the manhattan distance from the origin
