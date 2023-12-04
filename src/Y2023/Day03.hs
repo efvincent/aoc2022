@@ -4,6 +4,7 @@ module Y2023.Day03
   where
 
 import Coord (cY, origin, right, Coord(..), allNeighbors )
+import Util (getSample, getPuzzle)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Char (isNumber, digitToInt)
@@ -24,8 +25,8 @@ data Puzzle = Puzzle
 
 ssz :: Coord
 ssz = C 9 9
-pzs :: Coord
-pzs = C 110 110
+psz :: Coord
+psz = C 110 110
 
 ppuz :: Coord -> Puzzle -> IO ()
 ppuz (C my mx) Puzzle{..} = do
@@ -60,19 +61,8 @@ ppuz (C my mx) Puzzle{..} = do
         putStr $ show curY' ++ " |"
         loop (C curY' curX) points
 
-
-
-
-    -- loop _ [] = do putStrLn ""
-    -- loop curY ((C y _, c):rest)
-    --   | curY == y = do
-    --     putStr (" " ++ [c])
-    --     loop y rest
-    --   | otherwise = do
-    --     putStrLn ""
-    --     putStr (" " ++ [c])
-    --     loop (curY + 1) rest
-
+sln2302 :: String -> (Int, Int)
+sln2302 s = (solve1 s, solve2 s)
 
 pz0 :: Puzzle
 pz0 = Puzzle
@@ -92,21 +82,19 @@ readNum acc@(n,len) (c:rest)
 
 addSym :: Sym -> Puzzle -> Puzzle
 addSym sym@(C y x, _) p@Puzzle{..} =
-  let (yIdx, xIdx) = (y `div` 3, x `div` 3) in
   let symMapY' =
-        let xm = M.findWithDefault M.empty yIdx symMapY in
-        let syms = M.findWithDefault [] xIdx xm in
-        let xm' = M.insert xIdx (sym:syms) xm in
-        M.insert yIdx xm' symMapY in
+        let xm = M.findWithDefault M.empty y symMapY in
+        let syms = M.findWithDefault [] x xm in
+        let xm' = M.insert x (sym:syms) xm in
+        M.insert y xm' symMapY in
   p { symbols = sym:symbols, symMapY = symMapY' }
 
 addPartCoordToMap :: PartMap -> Coord -> PartNum -> PartMap
-addPartCoordToMap m pos@(C y x) part@(partPos,n) =
-  let (yIdx, xIdx) = (y `div` 3, x `div` 3) in
-  let xm = M.findWithDefault M.empty yIdx m in
-  let ns = M.findWithDefault [] xIdx xm in
-  let xm' = M.insert xIdx (part:ns) xm in
-  M.insert yIdx xm' m
+addPartCoordToMap m (C y x) part =
+  let xm = M.findWithDefault M.empty y m in
+  let ns = M.findWithDefault [] x xm in
+  let xm' = M.insert x (part:ns) xm in
+  M.insert y xm' m
 
 addPart :: String -> Coord -> Puzzle -> (Coord,Puzzle)
 addPart str pos@(C y x) puz@Puzzle{..} =
@@ -131,11 +119,10 @@ scanLine pos puz str@(c:rest)
 
 symNextToPart :: Puzzle -> Coord -> Bool
 symNextToPart Puzzle{..}  partCoord@(C y x) =
-  let (yIdx, xIdx) = (y `div` 3, x `div` 3) in
-  case symMapY M.!? yIdx of
+  case symMapY M.!? y of
     Nothing -> False
     Just xMap ->
-      case xMap M.!? xIdx of
+      case xMap M.!? x of
         Nothing -> False
         Just syms ->
           let symPoss = map fst syms in
@@ -146,18 +133,17 @@ pointInRange  (C y x) (C y1 x1, C y2 x2)=
   let pts = [C y' x' | y' <- [y1..y2], x' <- [x1..x2]] in
   any (\(C py px) -> py == y && px == x) pts
 
--- numsNextToSym :: Puzzle -> Sym -> [Int]
-numsNextToSym puz@Puzzle{..} pos@(C y x) =
-  -- need to expand this to find the neighbors of pos (the star) and
-  -- then find the parts that are neighbors of those neighbor positions
-  -- and then find the distinct set from there
-  let (yIdx, xIdx) = (y `div` 3, x `div` 3) in
-  let candidates =
-        case partMapY M.!? yIdx of
-          Nothing -> []
-          Just xMap -> S.toList . S.fromList . fromMaybe [] $ (xMap M.!? xIdx) in
- filter (pointInRange pos . fst) candidates
-  
+numsNextToSym :: Puzzle -> Coord -> [Int]
+numsNextToSym Puzzle{..} sym = 
+  let nums = map snd . S.toList . S.fromList $ allNeighbors sym >>= loop in 
+  if length nums == 2 then nums else []
+  where 
+  loop pos@(C y x) =
+    let candidates =
+          case partMapY M.!? y of
+            Nothing -> []
+            Just xMap -> S.toList . S.fromList . fromMaybe [] $ (xMap M.!? x) in
+    filter (pointInRange pos . fst) candidates
 
 isPartNum :: Puzzle -> PartNum -> Bool
 isPartNum puz part  =
@@ -166,18 +152,16 @@ isPartNum puz part  =
   let partCoords' = S.union (S.fromList partCoords) (S.fromList $ partCoords >>= allNeighbors) in
   any (symNextToPart puz) partCoords'
 
-solve3A :: String -> Int
-solve3A s =
+solve1 :: String -> Int
+solve1 s =
   let puz@Puzzle{..} = parse s in
   sum . map snd . filter (isPartNum puz) $ parts
 
--- solve3B :: String -> Int
-solve3B s =
+solve2 :: String -> Int
+solve2 s =
   let puz@Puzzle{..} = parse s in
   let symbols' = map fst . filter ((== '*') . snd) $ symbols in
-  let symbols'' = symbols' >>= allNeighbors in
-  S.toList . S.fromList . map (numsNextToSym puz) $ symbols''-- >>= allNeighbors
-  -- (puz, symbols', S.toList . S.fromList . map (numsNextToSym puz) $ symbols')
+  sum . map product . filter ((== 2) . length) . map (numsNextToSym puz) $ symbols'
 
 parse :: String -> Puzzle
 parse = snd . foldl (\(pos,acc) l -> scanLine pos acc l) (origin,pz0) . lines
