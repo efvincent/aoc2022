@@ -2,7 +2,7 @@
 module Y2023.Day05 (sln2305) where
 
 import Data.List.Split (splitOn, chunksOf)
-import Util (getNums)           -- gets all the natural #s from a string using regex
+import Util (getNums)           -- gets natural #s from a string using regex
 import Data.Ix (inRange, index)
 
 type Range      = (Int,Int)     -- start, end inclusive
@@ -40,7 +40,7 @@ decodeLine n (src@(ss,_), (ds,_)) =
 
 {-- Solution Part 2 -------------------------------------------}
 
-decodeLevel :: [Range] -> [Range] -> CatalogMap -> [Range] -- acc, inputs, catMap -> acc
+decodeLevel :: [Range] -> [Range] -> CatalogMap -> [Range] 
 decodeLevel acc [] _ = acc
 decodeLevel acc (input:rest) catMap =
   let acc' = acc ++ decodeMapOfRange [] input catMap in
@@ -88,7 +88,9 @@ parse1 s =
 parse2 :: String -> Puzzle2
 parse2 s =
   let (rawSeeds:rawMaps) = splitOn "\n\n" s in
-  let seeds = map (\[start,size] -> (start,start+size)) . chunksOf 2 . getNums $ rawSeeds in
+  let seeds = 
+        map (\[start,size] -> (start,start+size)) 
+        . chunksOf 2 . getNums $ rawSeeds in
   let maps = map (map parseMapLine . drop 1 . lines) rawMaps in
   (seeds,maps)
 
