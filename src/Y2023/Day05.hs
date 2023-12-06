@@ -2,24 +2,22 @@
 module Y2023.Day05 (sln2305) where
 
 import Data.List.Split (splitOn, chunksOf)
-import Util (getNums)           -- gets natural #s from a string using regex
+import Util (getNums, Parts(..)) 
 import Data.Ix (inRange, index)
 
 type Range      = (Int,Int)     -- start, end inclusive
 type MapLine    = (Range,Range) -- source range, dest range
 type CatalogMap = [MapLine]
-type Seeds      = [Int]
-type SeedRanges = [Range]
-type Puzzle1    = (Seeds, [CatalogMap])
-type Puzzle2    = (SeedRanges, [CatalogMap])
+data Seeds      = Singles [Int] | Ranges [Range]
+type Puzzle     = (Seeds, [CatalogMap])
 
 {-- Solutions----------------------------------------------------}
 
 sln2305 :: String -> (Int, Int)
 sln2305 s =
-  let p1 = let (ss,ms) = parse1 s in 
+  let p1 = let (Singles ss, ms) = parse s PartA in 
           minimum . map (\n -> foldl decodeMap n ms) $ ss in
-  let p2 = let (ss,ms) = parse2 s in 
+  let p2 = let (Ranges ss, ms) = parse s PartB in 
           fst . minimum . foldl (decodeLevel []) ss $ ms in
   (p1,p2)
 
@@ -78,21 +76,18 @@ decodeLineOfRange input@(start,end) (src@(ss,se), target@(ds,de))
 
 {-- Parsing ----------------------------------------------------}
 
-parse1 :: String -> Puzzle1
-parse1 s =
-  let (rawSeeds:rawMaps) = splitOn "\n\n" s in
-  let seeds = getNums rawSeeds in
-  let maps = map (map parseMapLine . drop 1 . lines) rawMaps in
-  (seeds,maps)
-
-parse2 :: String -> Puzzle2
-parse2 s =
-  let (rawSeeds:rawMaps) = splitOn "\n\n" s in
-  let seeds = 
-        map (\[start,size] -> (start,start+size)) 
-        . chunksOf 2 . getNums $ rawSeeds in
-  let maps = map (map parseMapLine . drop 1 . lines) rawMaps in
-  (seeds,maps)
+parse :: String -> Parts -> Puzzle
+parse s p = case p of
+  PartA ->
+    let (rawSeeds:rawMaps) = splitOn "\n\n" s in
+    let seeds = getNums rawSeeds in
+    let maps = map (map parseMapLine . drop 1 . lines) rawMaps in
+    (Singles seeds, maps)
+  PartB ->
+    let (rawSeeds:rawMaps) = splitOn "\n\n" s in
+    let seeds = map (\[start,size] -> (start,start+size)) . chunksOf 2 . getNums $ rawSeeds in
+    let maps = map (map parseMapLine . drop 1 . lines) rawMaps in
+    (Ranges seeds, maps)
 
 parseMapLine :: String -> (Range, Range)
 parseMapLine s =
