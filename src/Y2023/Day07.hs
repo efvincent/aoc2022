@@ -25,11 +25,15 @@ sln2307 s =
   let puz = parse s in
   (solve id puz, solve (map jokerize) puz)
 
+{-| Solves either part based on the adjuster, where the identity
+    function doesn't change the puzzle -}
 solve :: (Puzzle -> Puzzle) -> Puzzle -> Int
 solve adjuster puz =
   let puz' = zip [1..] (sortBy compareHands . adjuster $ puz) in
   sum $ map (\(n, (_, (_, bid))) -> n * bid) puz'
 
+{-| Produces a new hand with the "rank" adjusted for when Js are
+    interpreted as Jokers -}
 jokerize :: Hand -> Hand
 jokerize hand@(cards,(_,bid))=
   let cards' = [if c == J then Joker else c | c <- cards] in
@@ -38,15 +42,20 @@ jokerize hand@(cards,(_,bid))=
     True | all (== Joker) cards' -> (cards', (6, bid))
     True ->
       let bestNonJoker = snd . minimumBy (comparing Down) . map (\g -> (length g, head g)) . group . sortOn id . filter (/= Joker) $ cards' in
-      let wildcardSubHand = replaceAll Joker bestNonJoker cards' in 
-      (cards',(rankOf wildcardSubHand, bid))
+      let rank' = rankOf $ replaceAll Joker bestNonJoker cards' in 
+      (cards',(rank', bid))
 
+{-| Compare hands by looking at the rank, and only if they're equal
+    do we look at the individual cards, which are naturally in 
+    the correct order -}
 compareHands :: Hand -> Hand -> Ordering
 compareHands (hand1,(kind1,_)) (hand2,(kind2,_))
   | kind1 < kind2 = LT
   | kind1 > kind2 = GT
   | otherwise = compare hand1 hand2
 
+{-| The length of the grouped sets of cards in a hand, in descending order,
+    determines the rank of the hand -}
 rankOf :: Cards -> Int
 rankOf h =
   let grps = sortBy (comparing Down) . map length . group . sortOn id $ h in
