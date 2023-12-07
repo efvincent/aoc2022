@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 module Util 
   ( getSample
   , getPuzzle
@@ -12,6 +13,7 @@ module Util
   , signOf
   , remove
   , replaceAt
+  , replaceAll
   , uncurry3
   , findCycle
   , findCycleBy
@@ -71,6 +73,15 @@ replaceAt _ _ []  = []
 replaceAt n v (x:xs)
   | n == 0 = v:xs
   | otherwise = x:replaceAt (n-1) v xs
+
+{-| Replace All occurences of a value in a list with another value -}
+replaceAll :: forall a. Eq a => a -> a -> [a] -> [a]
+replaceAll a b = loop [] 
+  where
+    loop acc [] = reverse acc
+    loop acc (h:t) 
+      | h == a = loop (b:acc) t
+      | otherwise = loop (h:acc) t
 
 {-| pairs elements of a list by twos. 
     Ex: [1,2,3,4] -> [(1,2),(2,3),(3,4)] -}
