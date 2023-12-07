@@ -59,8 +59,7 @@ adjustHand hand@(cards,(_,bid))=
     True | all (== Joker) cards' -> (cards', (6, bid))
     True ->
       let bestNonJoker = snd . minimumBy (comparing Down) . map (\g -> (length g, head g)) . group . sortOn id . filter (/= Joker) $ cards' in
-      let wildcardSubHand = [if c == Joker then bestNonJoker else c | c <- cards'] in
-      (wildcardSubHand,(rankOf wildcardSubHand, bid))
+      (cards',(rankOf wildcardSubHand, bid))
 
 rankOf :: Cards -> Int
 rankOf h =
