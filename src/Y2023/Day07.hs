@@ -42,7 +42,7 @@ jokerize hand@(cards,(_,bid))=
     True | all (== Joker) cards' -> (cards', (6, bid))
     True ->
       let bestNonJoker = 
-            snd                              -- take the card that one
+            snd                              -- take the card that won
             . minimumBy (comparing Down)     -- sort descending, take the first
             . map (\g -> (length g, head g)) -- make a tuple w/ group len & card
             . group                          -- group by card
