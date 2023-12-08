@@ -41,7 +41,13 @@ jokerize hand@(cards,(_,bid))=
     False -> hand
     True | all (== Joker) cards' -> (cards', (6, bid))
     True ->
-      let bestNonJoker = snd . minimumBy (comparing Down) . map (\g -> (length g, head g)) . group . sortOn id . filter (/= Joker) $ cards' in
+      let bestNonJoker = 
+            snd                              -- take the card that one
+            . minimumBy (comparing Down)     -- sort descending, take the first
+            . map (\g -> (length g, head g)) -- make a tuple w/ group len & card
+            . group                          -- group by card
+            . sortOn id                      -- default sort cards
+            . filter (/= Joker) $ cards' in  -- disregard jokers
       let rank' = rankOf $ replaceAll Joker bestNonJoker cards' in 
       (cards',(rank', bid))
 
