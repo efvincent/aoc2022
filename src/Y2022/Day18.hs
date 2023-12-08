@@ -5,7 +5,6 @@ import Util (getSample, getPuzzle, Parts(..))
 import Data.Set (Set, (\\))
 import qualified Data.Set as S
 import Data.Foldable (minimumBy, maximumBy, toList)
-import Algorithm.Search (bfs)
 import Data.Maybe (fromMaybe, isNothing, fromJust)
 import Coord3 (Coord3(..), neighbors, from3Tuple, boundingBox)
 import GHC.Ix (inRange)
