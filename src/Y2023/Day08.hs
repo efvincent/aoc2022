@@ -4,17 +4,12 @@ module Y2023.Day08 (sln2308) where
 import Data.List.Split (splitOn)
 import qualified Data.Map as M (Map, fromList, keys, (!))
 
-
-type Ident = String
-type Node = (Ident, Ident)
-type Network = M.Map Ident Node
+type Ident        = String
+type Node         = (Ident, Ident)
+type Network      = M.Map Ident Node
+type Instruction  = Char
 type Instructions = String
-type Puzzle = (Instructions, Network)
-
-next :: Char -> (a, a) -> a
-next 'L' = fst
-next 'R' = snd
-next _   = undefined
+type Puzzle       = (Instructions, Network)
 
 {-- Solutions----------------------------------------------------}
 
@@ -47,6 +42,12 @@ findPathLen predicate net startNode instr = loop 0 startNode instr
     loop acc cur (i:rest) =
       let nextId = next i cur in
       if predicate nextId then acc + 1 else loop (acc+1) (net M.! nextId) rest
+
+{-| Choose either the left or right from the node  -}
+next :: Instruction -> Node -> Ident
+next 'L' = fst
+next 'R' = snd
+next _   = undefined
 
 {-| find least common multiple of a list of numbers -}
 lcmm :: [Int] -> Int
