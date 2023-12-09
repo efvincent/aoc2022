@@ -1,27 +1,12 @@
-module Y2023.Day09 where
+module Y2023.Day09 (sln2309) where
 
-import Data.List.Split (splitOn)
-import qualified Data.Map as M (Map, fromList, keys, (!))
+import Util (getNums)
+import Data.Set (fromList, singleton)
 
-
-type Puzzle = Int
-
-{-- Solutions----------------------------------------------------}
-
-sln2309 :: String -> (Int,Int)
-sln2309 s =
-  let puz = parse s in
-  (solve1 puz, solve2 puz)
-
-solve1 :: Puzzle -> Int
-solve1 puz = undefined
-
-solve2 :: Puzzle -> Int
-solve2 puz = undefined
-
-
-{-- Parsing ----------------------------------------------------}
-
-parse :: String -> Puzzle
-parse s =
-  undefined
+sln2309 :: String -> (Int, Int)
+sln2309 s = ((sum . map loop) puz, (sum . map (loop . reverse)) puz)
+  where
+  puz = (map getNums . lines) s 
+  loop l
+    | fromList l == singleton 0 = 0
+    | otherwise = last l + loop [b - a | (a,b) <- zip l (tail l)]

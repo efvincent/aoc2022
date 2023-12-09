@@ -1,4 +1,4 @@
-module Y2023.Day10 where
+module Y2023.Day10 () where
 
 import Data.List.Split (splitOn)
 import qualified Data.Map as M (Map, fromList, keys, (!))
