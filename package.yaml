@@ -16,6 +16,7 @@ dependencies:
 - regex-tdfa
 - search-algorithms
 - array
+- ansi-terminal
 
 ghc-options:
   - -Wall

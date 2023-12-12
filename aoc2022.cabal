@@ -78,6 +78,7 @@ executable aoc2022.exe
   ghc-options: -Wall -Wcompat -Wincomplete-uni-patterns -Wredundant-constraints -Wincomplete-record-updates -Widentities -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
+    , ansi-terminal
     , array
     , base >=4.7 && <5
     , containers
