@@ -8,9 +8,6 @@ import qualified Data.Set as S (Set, fromList, member, insert, union)
 import Coord ( Coord(..), west, east, south, neighbors, north )
 
 data Tile = NS | EW | NE | NW | SE | SW | G | Start | NonPath deriving (Show, Eq, Ord)
-data Compass = N | S | E | W deriving (Show)
-data Dir = Up | Down | Neither  deriving (Show)
-data LoopDir = CW | CCW deriving (Show, Eq)
 type Board  = M.Map Coord Tile
 type Puzzle = (Board, Coord)
 
