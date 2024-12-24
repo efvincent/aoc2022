@@ -14,5 +14,6 @@
     "**/.ghci": true,
     "**/.vscode": true,
     "**/dist*": true
-  }
+  },
+  "makefile.configureOnOpen": false
 }

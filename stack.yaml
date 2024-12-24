@@ -1,4 +1,4 @@
-resolver: lts-19.0
+resolver: lts-21.25
 system-ghc: true
 packages:
 - .
